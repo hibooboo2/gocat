@@ -24,8 +24,6 @@ func main() {
 		champNames = append(champNames, name)
 	}
 	sort.Strings(champNames)
-	// fmt.Println(loadedImage.Bounds(), loadedImage.At(0, 0))
-	// r, g, b, a := loadedImage.At(0, 0).RGBA()
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 	var err error
 	s, err = tcell.NewScreen()
@@ -34,11 +32,6 @@ func main() {
 	}
 	s.Init()
 	defer s.Fini()
-	st := tcell.StyleDefault
-	st = st.Background(tcell.NewHexColor(0xfea0ab))
-	s.SetCell(15, 15, st, 'A')
-	s.Show()
-	// log.Println(s.Size())
 
 	x := 0
 	for _, champName := range champNames {
@@ -96,13 +89,9 @@ func drawImage(img image.Image) error {
 			st = st.Foreground(tcell.NewRGBColor(int32(r), int32(g), int32(b)))
 			s.SetCell(x, y/2, st, '▄')
 			y++
-			// termbox.SetCell(x, y, '▄', termbox.Attribute(ansirgb.Convert(&c2).Code), termbox.Attribute(ansirgb.Convert(&c).Code))
-			// termbox.SetCell(x+50, y, '▄', termbox.Attribute(ansirgb.Convert(img.At(x, y+1)).Code), termbox.Attribute(ansirgb.Convert(img.At(x, y)).Code))
 		}
 	}
-	// s.Show()
 	s.Sync()
-	// termbox.Flush()
 	return nil
 }
 
