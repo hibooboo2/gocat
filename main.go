@@ -81,14 +81,13 @@ func drawImage(img image.Image) error {
 	min := img.Bounds().Min
 	max := img.Bounds().Max
 	for x := min.X; x <= max.X; x++ {
-		for y := min.Y; y <= max.Y; y++ {
+		for y := min.Y; y <= max.Y; y += 2 {
 			st := tcell.StyleDefault
 			r, g, b, _ := img.At(x, y).RGBA()
 			st = st.Background(tcell.NewRGBColor(int32(r), int32(g), int32(b)))
 			r, g, b, _ = img.At(x, y+1).RGBA()
 			st = st.Foreground(tcell.NewRGBColor(int32(r), int32(g), int32(b)))
 			s.SetCell(x, y/2, st, '▄')
-			y++
 		}
 	}
 	s.Sync()
