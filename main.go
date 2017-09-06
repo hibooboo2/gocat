@@ -7,23 +7,51 @@ import (
 	"image/png"
 	"log"
 	"net/http"
-	"os"
 	"sort"
+	"sync"
 	"time"
 
+	"github.com/c-bata/go-prompt"
 	"github.com/gdamore/tcell"
+	"github.com/harrydb/go/img/grayscale"
 	"github.com/nfnt/resize"
 )
 
 var s tcell.Screen
 
-func main() {
-	champsMap := getChamps() //"https://na1.api.riotgames.com/lol/static-data/v3/champions?api_key=RGAPI-ed1dfe8d-8adb-4283-8a3a-094e5dddb3df"
-	champNames := []string{}
-	for name := range champsMap {
-		champNames = append(champNames, name)
+func completer(d prompt.Document) []prompt.Suggest {
+	s := []prompt.Suggest{}
+	for _, champ := range sortedChamps() {
+		s = append(s, prompt.Suggest{Text: champ.Id, Description: champ.Title})
 	}
-	sort.Strings(champNames)
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+}
+
+func executor(in string) {
+	fmt.Println("Your input: " + in)
+}
+
+func ctrlC(b *prompt.Buffer) {
+}
+
+func main() {
+	p := prompt.New(executor, completer, prompt.OptionAddKeyBind(prompt.KeyBind{Key: prompt.ControlC, Fn: ctrlC}),
+		prompt.OptionTitle("Pick your Champ: "),
+		prompt.OptionPrefix("Pick your Champ: "),
+		prompt.OptionMaxSuggestion(20))
+	champs := getChamps()
+	for {
+		t := p.Input()
+		champ, ok := champs[t]
+		if !ok {
+			break
+		}
+		drawChamp(champ)
+		fmt.Printf("%+v", champ)
+	}
+}
+
+func main2() {
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 	var err error
 	s, err = tcell.NewScreen()
@@ -34,8 +62,7 @@ func main() {
 	defer s.Fini()
 
 	x := 0
-	for _, champName := range champNames {
-		champ := champsMap[champName]
+	for _, champ := range sortedChamps() {
 		// log.Println(champ.Key)
 		drawChampHead(champ)
 		time.Sleep(time.Millisecond * 3000)
@@ -47,8 +74,36 @@ func main() {
 	time.Sleep(time.Second * 1)
 }
 
+func drawChamp(champ Champ) {
+	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
+	var err error
+	s, err = tcell.NewScreen()
+	if err != nil {
+		panic(err)
+	}
+	s.Init()
+	defer s.Fini()
+	resp, err := http.Get(fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/6.24.1/img/champion/%s.png", champ.Id))
+	if err != nil {
+		// log.Println("Errored getting champ:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	loadedImage, err := png.Decode(resp.Body)
+	if err == nil {
+		if loadedImage != nil {
+			drawImage(loadedImage, true, 30, 0, 0)
+			drawImage(loadedImage, false, 30, 32, 0)
+			drawImage(loadedImage, true, 50, 0, 15)
+			drawImage(loadedImage, false, 50, 50, 15)
+		}
+	}
+	time.Sleep(time.Second * 3)
+}
+
 func drawChampHead(champ Champ) {
-	resp, err := http.Get(fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/6.24.1/img/champion/%s.png", champ.Key))
+	resp, err := http.Get(fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/6.24.1/img/champion/%s.png", champ.Id))
 	if err != nil {
 		// log.Println("Errored getting champ:", err)
 		return
@@ -60,7 +115,7 @@ func drawChampHead(champ Champ) {
 		// Handle error
 	}
 	if loadedImage != nil {
-		drawImage(loadedImage)
+		drawImage(loadedImage, false, 120, 0, 0)
 		// smallImg := resize.Resize(80, 80, loadedImage, resize.Lanczos3)
 		// drawImage(smallImg)
 		// f, err := os.Create(champ.Key + ".png")
@@ -71,13 +126,15 @@ func drawChampHead(champ Champ) {
 	}
 }
 
-func drawImage(img image.Image) error {
+func drawImage(img image.Image, blackAndWhite bool, size uint, xoff, yoff int) error {
 	if img == nil {
 		log.Println("Nil img")
 		return nil
 	}
-	// img = grayscale.Convert(img, grayscale.ToGrayLuminance)
-	img = resize.Resize(80, 80, img, resize.Lanczos3)
+	if blackAndWhite {
+		img = grayscale.Convert(img, grayscale.ToGrayLuminance)
+	}
+	img = resize.Resize(size, size, img, resize.Lanczos3)
 	min := img.Bounds().Min
 	max := img.Bounds().Max
 	for x := min.X; x <= max.X; x++ {
@@ -87,7 +144,7 @@ func drawImage(img image.Image) error {
 			st = st.Background(tcell.NewRGBColor(int32(r), int32(g), int32(b)))
 			r, g, b, _ = img.At(x, y+1).RGBA()
 			st = st.Foreground(tcell.NewRGBColor(int32(r), int32(g), int32(b)))
-			s.SetCell(x, y/2, st, '▄')
+			s.SetCell(x+xoff, y/2+yoff, st, '▄')
 		}
 	}
 	s.Sync()
@@ -95,18 +152,58 @@ func drawImage(img image.Image) error {
 }
 
 type Champ struct {
-	Id    int
+	Id    string
 	Key   string
 	Name  string
 	Title string
 }
 
+var champsOnce sync.Once
+var champsMasterMap map[string]Champ
+
 func getChamps() map[string]Champ {
-	var champData struct {
-		Data map[string]Champ
+	champsOnce.Do(func() {
+		resp, _ := http.Get("https://ddragon.leagueoflegends.com/realms/na.json")
+		var relms struct {
+			Cdn string
+			V   string
+			N   struct {
+				Champion string
+			}
+		}
+		err := json.NewDecoder(resp.Body).Decode(&relms)
+		if err != nil {
+			fmt.Println(err)
+		}
+		resp.Body.Close()
+
+		var champData struct {
+			Data map[string]Champ
+		}
+		resp, _ = http.Get(relms.Cdn + "/" + relms.V + "/data/en_US/champion.json")
+		err = json.NewDecoder(resp.Body).Decode(&champData)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(relms)
+			fmt.Println(champData.Data)
+		}
+		resp.Body.Close()
+		champsMasterMap = champData.Data
+	})
+	return champsMasterMap
+}
+
+func sortedChamps() []Champ {
+	champsMap := getChamps()
+	champNames := []string{}
+	for name := range champsMap {
+		champNames = append(champNames, name)
 	}
-	f, _ := os.Open("champs.json")
-	defer f.Close()
-	json.NewDecoder(f).Decode(&champData)
-	return champData.Data
+	sort.Strings(champNames)
+	champs := []Champ{}
+	for _, champ := range champNames {
+		champs = append(champs, champsMap[champ])
+	}
+	return champs
 }
