@@ -93,10 +93,7 @@ func drawChamp(champ Champ) {
 	loadedImage, err := png.Decode(resp.Body)
 	if err == nil {
 		if loadedImage != nil {
-			drawImage(loadedImage, true, 30, 0, 0)
-			drawImage(loadedImage, false, 30, 32, 0)
-			drawImage(loadedImage, true, 50, 0, 15)
-			drawImage(loadedImage, false, 50, 50, 15)
+			drawImage(loadedImage, false, 30, 0, 0)
 		}
 	}
 	time.Sleep(time.Second * 3)
