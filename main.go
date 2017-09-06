@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"log"
 	"net/http"
+	"os"
 	"sort"
 	"sync"
 	"time"
@@ -20,9 +21,16 @@ import (
 var s tcell.Screen
 
 func completer(d prompt.Document) []prompt.Suggest {
+	var lim int
+	if d.GetWordBeforeCursor() == "" {
+		lim = 5
+	}
 	s := []prompt.Suggest{}
-	for _, champ := range sortedChamps() {
+	for i, champ := range sortedChamps() {
 		s = append(s, prompt.Suggest{Text: champ.Id, Description: champ.Title})
+		if lim != 0 && i >= lim {
+			break
+		}
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
@@ -47,7 +55,8 @@ func main() {
 			break
 		}
 		drawChamp(champ)
-		fmt.Printf("%+v", champ)
+
+		fmt.Fprintf(os.Stdout, "%+v\n", champ)
 	}
 }
 
