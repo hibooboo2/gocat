@@ -52,15 +52,16 @@ type ParticipantIdentity struct {
 }
 
 // WebMatchHistory circumvent riots api throttling. Or at least attepmt to. This is using the endpoint that the web ui uses. No docs for it.
-func (c *Client) WebMatch(gameID, accountID int64, currentPlatformID string) (*Game, error) {
-	game, err := c.cache.GetGame(gameID, accountID, currentPlatformID)
+func (c *Client) WebMatch(gameID int64, currentPlatformID string) (*Game, error) {
+	game, err := c.cache.GetGame(gameID, currentPlatformID)
 	if err == nil {
 		return &game, nil
 	}
 	query := make(url.Values)
-	query.Add("visibleAccountId", fmt.Sprintf(`%d`, accountID))
+	// query.Add("visibleAccountId", fmt.Sprintf(`%d`, accountID))
 	query.Add("visiblePlatformId", currentPlatformID)
 	//https://acs.leagueoflegends.com/v1/stats/game/NA1/2591856267?visiblePlatformId=NA1&visibleAccountId=237823602
+
 	reqURL, err := url.Parse(fmt.Sprintf("https://acs.leagueoflegends.com/v1/stats/game/%s/%d", currentPlatformID, gameID))
 	reqURL.RawQuery = query.Encode()
 	if err != nil {
@@ -77,7 +78,7 @@ func (c *Client) WebMatch(gameID, accountID int64, currentPlatformID string) (*G
 	if err != nil {
 		return nil, err
 	}
-	err = c.cache.SaveGame(game, accountID, currentPlatformID)
+	err = c.cache.SaveGame(game, currentPlatformID)
 	if err != nil {
 		log.Println("err: Failed to save game to db / cache", err)
 	}

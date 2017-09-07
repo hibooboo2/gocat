@@ -202,6 +202,7 @@ func (c *Client) WebMatchHistory(accountID int64, platformID string, index int) 
 	if err != nil {
 		return nil, err
 	}
+	// https://acs.leagueoflegends.com/v1/stats/player_history/NA1/205659322?begIndex=120&endIndex=135&
 	// https://acs.leagueoflegends.com/v1/stats/player_history/NA/34178787?begIndex=200`, a ...interface{}))
 	return &games, nil
 }

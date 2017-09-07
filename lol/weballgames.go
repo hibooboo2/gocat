@@ -13,13 +13,20 @@ func (c *Client) GetAllGames(accountID int64, platformID string) ([]Game, error)
 	if err != nil {
 		return nil, err
 	}
-	for info.Games.GameIndexEnd < info.Games.GameCount {
+	for info.Games.GameIndexEnd < info.Games.GameCount-1 {
 		games = append(games, info.Games.Games...)
-		info, err = c.WebMatchHistory(34178787, platformID, info.Games.GameIndexEnd+1)
+		info, err = c.WebMatchHistory(accountID, platformID, info.Games.GameIndexEnd)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Fprintf(os.Stdout, "Len Games: %d IndexStart: %d IndexEnd: %d GamesCount: %d\r", len(games), info.Games.GameIndexBegin, info.Games.GameIndexEnd, info.Games.GameCount)
+		var player string
+		for _, sum := range info.Games.Games[0].ParticipantIdentities {
+			if sum.Player.AccountID == accountID {
+				player = sum.Player.SummonerName
+				break
+			}
+		}
+		fmt.Fprintf(os.Stdout, "Len Games: %d IndexStart: %d IndexEnd: %d GamesCount: %d Player: %s\r", len(games), info.Games.GameIndexBegin, info.Games.GameIndexEnd, info.Games.GameCount, player)
 	}
 	return games, nil
 }
