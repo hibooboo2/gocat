@@ -8,5 +8,6 @@ type lolStorer interface {
 	VisitPlayer(p Player) error
 	GetPlayersToVisit() ([]Player, error)
 	GetPlayerToVisit() (Player, error)
+	Stats()
 	Close()
 }

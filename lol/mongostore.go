@@ -3,6 +3,8 @@ package lol
 import (
 	"errors"
 	"fmt"
+	"os"
+	"time"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -31,11 +33,11 @@ func NewLolMongo(host string, port int) (lolStorer, error) {
 		return nil, err
 	}
 	n, _ := session.DB("lol").C("games").Count()
-	logger.Printf("trace:games: %d", n)
+	logger.Printf("debug:games: %d", n)
 	n, _ = session.DB("lol").C("players").Count()
-	logger.Printf("trace:left to visit: %d", n)
+	logger.Printf("debug:left to visit: %d", n)
 	n, _ = session.DB("lol").C("playersvisited").Count()
-	logger.Printf("trace: visited: %d", n)
+	logger.Printf("debug: visited: %d", n)
 	return &lolMongo{
 		session,
 		session.DB("lol"),
@@ -100,6 +102,34 @@ func (db *lolMongo) VisitPlayer(p Player) error {
 		return err
 	}
 	return db.playersVisited.Insert(&p)
+}
+
+func (db *lolMongo) Stats() {
+	var diffs []int
+	prevCount, _ := db.games.Count()
+	for {
+		time.Sleep(time.Millisecond * 500)
+		g, _ := db.games.Count()
+		diff := g - prevCount
+		diffs = append(diffs, diff)
+		rate := avg(diffs) * 2
+		if len(diffs) > 60 {
+			diffs = diffs[:30]
+		}
+		prevCount = g
+		p, _ := db.players.Count()
+		pv, _ := db.playersVisited.Count()
+		fmt.Fprintf(os.Stdout, "GameAddRate %0f/s\t Games: %d\t Players %d\t PlayersVisited %d\r", rate, g, p, pv)
+	}
+}
+
+func avg(vals []int) float64 {
+	var avg float64
+	for _, val := range vals {
+		avg += float64(val)
+	}
+	avg = avg / float64(len(vals))
+	return avg
 }
 
 func (db *lolMongo) TransferToAnother(host string, port int) error {

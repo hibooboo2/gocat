@@ -26,6 +26,9 @@ func main() {
 	var player lol.Player
 	var err error
 	log.Println("Starting scraping forever...")
+	if len(os.Args) == 2 && os.Args[1] == "-w" {
+		c.GetCache().Stats()
+	}
 	for matchesFarmed < 5000000 {
 		player, err = c.GetCache().GetPlayerToVisit()
 		if err != nil {
