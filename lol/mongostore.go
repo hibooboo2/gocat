@@ -92,6 +92,12 @@ func (db *lolMongo) GetPlayersToVisit() ([]Player, error) {
 	return players, err
 }
 
+func (db *lolMongo) GetPlayerToVisit() (Player, error) {
+	var p Player
+	err := db.players.Find(bson.M{"platformid": "NA1"}).One(&p)
+	return p, err
+}
+
 func (db *lolMongo) VisitPlayer(p Player) error {
 	err := db.players.Remove(bson.M{"accountid": p.AccountID})
 	if err != nil {

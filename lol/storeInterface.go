@@ -7,5 +7,6 @@ type lolStorer interface {
 	StorePlayer(p Player, gotMatches bool) error
 	VisitPlayer(p Player) error
 	GetPlayersToVisit() ([]Player, error)
+	GetPlayerToVisit() (Player, error)
 	Close()
 }
