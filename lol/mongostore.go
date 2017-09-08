@@ -3,7 +3,6 @@ package lol
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -75,11 +74,6 @@ func (db *lolMongo) Close() {
 	db.session.Close()
 }
 
-type PlayerWithVisited struct {
-	Player
-	Visited bool
-}
-
 func (db *lolMongo) StorePlayer(p Player, gotMatches bool) error {
 	n, _ := db.playersVisited.Find(bson.M{"accountid": p.AccountID}).Count()
 	if n == 0 {
@@ -96,7 +90,6 @@ func (db *lolMongo) GetPlayersToVisit() ([]Player, error) {
 func (db *lolMongo) GetPlayerToVisit() (Player, error) {
 	var p Player
 	err := db.players.Find(bson.M{"platformid": "NA1"}).One(&p)
-	log.Println(p)
 	return p, err
 }
 
