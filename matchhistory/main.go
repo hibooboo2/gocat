@@ -1,65 +1,92 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/hibooboo2/gocat/lol"
 )
 
-var c = lol.NewClient()
+var c *lol.Client
+
+func init() {
+	var err error
+	c, err = lol.NewClient()
+	if err != nil {
+		panic(err)
+	}
+}
 
 func main() {
+	defer c.Close()
+	c.Debug = true
 	// repeat for all summoners
-	accountID := int64(34178787) //sir yogi bear
-	// accountID := int64(44278412)
-	// accountID := int64(42795563)
-	// accountID := int64(205659322) // Sir fxwright
-	games, err := c.GetAllGames(accountID, "NA1")
-	// cache := lol.NewLolCache()
-	// games, err := cache.GetGames(accountID, "NA1")
-
+	players, err := c.GetCache().GetPlayersToVisit()
 	if err != nil {
-		log.Fatalln("Failed to get history: ", err)
+		log.Println("Failed to get playes to visit: ", err)
 	}
-	sums := make(map[int64]lol.Player)
-	var pentas int
-	for _, game := range games {
-		game, _ := c.WebMatch(game.GameID, game.ParticipantIdentities[0].Player.CurrentPlatformID)
-		for _, sum := range game.ParticipantIdentities {
-			sums[sum.Player.AccountID] = sum.Player
-			if sum.Player.AccountID == accountID {
-				for _, particpant := range game.Participants {
-					if particpant.ParticipantID == sum.ParticipantID {
-						if particpant.Stats.PentaKills > 0 {
-							pentas += particpant.Stats.PentaKills
-						}
-					}
+
+	if len(players) == 0 {
+		accountID := int64(34178787) //sir yogi bear
+		// accountID := int64(44278412)
+		// accountID := int64(42795563)
+		// accountID := int64(205659322) // Sir fxwright
+		games, err := c.GetAllGamesLimitPatch(accountID, "NA1", "7.17")
+		if err != nil {
+			log.Fatalln("Failed to get history: ", err)
+		}
+		var thisSum lol.Player
+		for _, game := range games {
+			game, _ := c.WebMatch(game.GameID, game.ParticipantIdentities[0].Player.CurrentPlatformID)
+			for _, sum := range game.ParticipantIdentities {
+				if sum.Player.AccountID != accountID {
+					c.GetCache().StorePlayer(sum.Player, false)
+				} else {
+					thisSum = sum.Player
 				}
 			}
 		}
-
+		c.GetCache().StorePlayer(thisSum, true)
 	}
-	log.Println(pentas)
-	sumVisited := make(map[int64]bool)
+
 	for {
-		for _, sum := range sums {
-			if sumVisited[sum.AccountID] {
+		players, err := c.GetCache().GetPlayersToVisit()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if len(players) == 0 {
+			log.Println("How the hell do we have no players to crawl?")
+			return
+		}
+		for _, player := range players {
+			if player.Visited {
 				continue
 			}
-			games, err := c.GetAllGames(sum.AccountID, sum.CurrentPlatformID)
+			games, err := c.GetAllGamesLimitPatch(player.AccountID, player.CurrentPlatformID, "7.17.")
 			if err != nil {
 				continue
 			}
-			for _, game := range games {
-				game, err := c.WebMatch(game.GameID, game.PlatformID)
+			var game *lol.Game
+			for _, g := range games {
+				id := g.GameID
+				game, err = c.WebMatch(g.GameID, g.PlatformID)
 				if err != nil {
-					log.Println("err: Failed to get match:", game.GameID, err)
+					log.Println("err: Failed to get match:", id, err)
+					continue
 				}
 				for _, sum := range game.ParticipantIdentities {
-					sums[sum.Player.AccountID] = sum.Player
+					if sum.Player.AccountID != player.AccountID {
+						c.GetCache().StorePlayer(sum.Player, false)
+					}
 				}
 			}
-			sumVisited[sum.AccountID] = true
+			player.Visited = true
+			err = c.GetCache().UpdatePlayer(player)
+			if err != nil {
+				log.Println(err)
+			}
+			fmt.Fprintf(os.Stdout, "Total Games for Sum: %d Sum: %s Totals Summoners: %d", len(games), player.SummonerName, len(players))
 		}
 	}
 }
