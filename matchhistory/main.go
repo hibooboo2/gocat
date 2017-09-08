@@ -23,9 +23,14 @@ func main() {
 	defer c.Close()
 
 	var matchesFarmed int
-	player, err := c.GetCache().GetPlayerToVisit()
+	var player lol.Player
+	var err error
 	log.Println("Starting scraping forever...")
-	for err == nil && matchesFarmed < 5000000 {
+	for matchesFarmed < 5000000 {
+		player, err = c.GetCache().GetPlayerToVisit()
+		if err != nil {
+			break
+		}
 		games, err := c.GetAllGamesLimitPatch(player.AccountID, player.CurrentPlatformID, "7.17.")
 		if err != nil {
 			continue
@@ -36,6 +41,7 @@ func main() {
 			id := g.GameID
 			game, err = c.WebMatch(g.GameID, g.PlatformID)
 			matchesFarmed++
+			fmt.Fprintf(os.Stdout, "\r%d", matchesFarmed)
 			// log.Println("Farmed", matchesFarmed)
 			if err != nil {
 				log.Println("err: Failed to get match:", id, err)
