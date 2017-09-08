@@ -22,11 +22,10 @@ func init() {
 func main() {
 	defer c.Close()
 
-	log.Println("Starting scraping forever...")
 	var matchesFarmed int
 	player, err := c.GetCache().GetPlayerToVisit()
-	for err != nil && matchesFarmed > 5000000 {
-		log.Println(player.SummonerName)
+	log.Println("Starting scraping forever...")
+	for err == nil && matchesFarmed < 5000000 {
 		games, err := c.GetAllGamesLimitPatch(player.AccountID, player.CurrentPlatformID, "7.17.")
 		if err != nil {
 			continue
