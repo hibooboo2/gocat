@@ -90,6 +90,7 @@ func (db *lolMongo) GetPlayersToVisit() ([]Player, error) {
 func (db *lolMongo) GetPlayerToVisit() (Player, error) {
 	var p Player
 	err := db.players.Find(bson.M{"platformid": "NA1"}).One(&p)
+	db.VisitPlayer(p)
 	return p, err
 }
 

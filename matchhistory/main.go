@@ -29,10 +29,14 @@ func main() {
 	for matchesFarmed < 5000000 {
 		player, err = c.GetCache().GetPlayerToVisit()
 		if err != nil {
-			break
+			log.Println(err)
+			continue
 		}
+		sumsVisited++
+
 		games, err := c.GetAllGamesLimitPatch(player.AccountID, player.CurrentPlatformID, "7.17.")
 		if err != nil {
+			log.Println(err)
 			continue
 		}
 		// log.Println("Got games for: ", player.SummonerName, len(games))
@@ -56,11 +60,7 @@ func main() {
 			}
 			// log.Println("Got game: ", game.GameID)
 		}
-		err = c.GetCache().VisitPlayer(player)
-		sumsVisited++
-		if err != nil {
-			log.Println(err)
-		}
+
 	}
 	if err != nil {
 		log.Fatalln(err)
