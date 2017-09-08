@@ -22,7 +22,7 @@ func init() {
 func main() {
 	defer c.Close()
 
-	var matchesFarmed int
+	var matchesFarmed, sumsVisited int
 	var player lol.Player
 	var err error
 	log.Println("Starting scraping forever...")
@@ -40,8 +40,10 @@ func main() {
 		for _, g := range games {
 			id := g.GameID
 			game, err = c.WebMatch(g.GameID, g.PlatformID)
-			matchesFarmed++
-			fmt.Fprintf(os.Stdout, "\r%d", matchesFarmed)
+			if !game.Cached {
+				matchesFarmed++
+			}
+			fmt.Fprintf(os.Stdout, "\rSum:\t%s\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", player.SummonerName, id, matchesFarmed, sumsVisited)
 			// log.Println("Farmed", matchesFarmed)
 			if err != nil {
 				log.Println("err: Failed to get match:", id, err)
@@ -55,10 +57,10 @@ func main() {
 			// log.Println("Got game: ", game.GameID)
 		}
 		err = c.GetCache().VisitPlayer(player)
+		sumsVisited++
 		if err != nil {
 			log.Println(err)
 		}
-		fmt.Fprintf(os.Stdout, "\rTotal Games for Sum: %d Sum: %s", len(games), player.SummonerName)
 	}
 	if err != nil {
 		log.Fatalln(err)

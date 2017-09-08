@@ -44,6 +44,7 @@ type Game struct {
 	Teams                 []Team                `json:"teams"`
 	Participants          []Participant         `json:"participants"`
 	ParticipantIdentities []ParticipantIdentity `json:"participantIdentities"`
+	Cached                bool                  `json:"-"`
 }
 type ParticipantIdentity struct {
 	ParticipantID int    `json:"participantId"`
@@ -54,6 +55,7 @@ type ParticipantIdentity struct {
 func (c *Client) WebMatch(gameID int64, currentPlatformID string) (*Game, error) {
 	game, err := c.cache.GetGame(gameID, currentPlatformID)
 	if err == nil {
+		game.Cached = true
 		return &game, nil
 	}
 	query := make(url.Values)
