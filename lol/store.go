@@ -107,7 +107,7 @@ func (db *lolCache) TransferFromLocalToMongo(collection string) ([]string, error
 	}
 
 	var records []string
-	mongo, err := NewLolMongo()
+	mongo, err := NewLolMongo("", 0)
 	if err != nil {
 		return nil, err
 	}

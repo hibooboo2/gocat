@@ -18,7 +18,7 @@ type Client struct {
 var Debug bool
 
 func NewClient() (*Client, error) {
-	cache, err := NewLolMongo()
+	cache, err := NewLolMongo("dev.jhrb.us", 27217)
 	if err != nil {
 		return nil, err
 	}
