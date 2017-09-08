@@ -21,7 +21,6 @@ func init() {
 
 func main() {
 	defer c.Close()
-	c.Debug = true
 	players, err := c.GetCache().GetPlayersToVisit()
 	if err != nil {
 		log.Println("Failed to get playes to visit: ", err)
@@ -66,13 +65,13 @@ func main() {
 			if err != nil {
 				continue
 			}
-			log.Println("Got games for: ", player.SummonerName, len(games))
+			// log.Println("Got games for: ", player.SummonerName, len(games))
 			var game *lol.Game
 			for _, g := range games {
 				id := g.GameID
 				game, err = c.WebMatch(g.GameID, g.PlatformID)
 				matchesFarmed++
-				log.Println("Farmed", matchesFarmed)
+				// log.Println("Farmed", matchesFarmed)
 				if err != nil {
 					log.Println("err: Failed to get match:", id, err)
 					continue
@@ -82,13 +81,13 @@ func main() {
 						c.GetCache().StorePlayer(sum.Player, false)
 					}
 				}
-				log.Println("Got game: ", game.GameID)
+				// log.Println("Got game: ", game.GameID)
 			}
 			err = c.GetCache().VisitPlayer(player)
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Fprintf(os.Stdout, "Total Games for Sum: %d Sum: %s Totals Summoners: %d", len(games), player.SummonerName, len(players))
+			fmt.Fprintf(os.Stdout, "\rTotal Games for Sum: %d Sum: %s Totals Summoners: %d", len(games), player.SummonerName, len(players))
 			if matchesFarmed > 500000 {
 				return
 			}

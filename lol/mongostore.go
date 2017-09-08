@@ -2,7 +2,6 @@ package lol
 
 import (
 	"errors"
-	"log"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -25,11 +24,11 @@ func NewLolMongo() (lolStorer, error) {
 		return nil, err
 	}
 	n, _ := session.DB("lol").C("games").Count()
-	log.Printf("games: %d", n)
+	logger.Printf("trace:games: %d", n)
 	n, _ = session.DB("lol").C("players").Count()
-	log.Printf("Left to visit: %d", n)
+	logger.Printf("trace:left to visit: %d", n)
 	n, _ = session.DB("lol").C("playersvisited").Count()
-	log.Printf("Visited: %d", n)
+	logger.Printf("trace: visited: %d", n)
 	return &lolMongo{
 		session,
 		session.DB("lol"),

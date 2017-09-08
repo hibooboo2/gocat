@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -47,17 +46,17 @@ func (db *lolCache) Close() {
 // 		var g Game
 // 		err := json.Unmarshal([]byte(gameData), &g)
 // 		if err != nil {
-// 			log.Println("err: Errored converting to json from string in get games", err)
+// 			logger.Println("err: Errored converting to json from string in get games", err)
 // 			continue
 // 		}
 // 		err = db.SaveGame(g, "NA1")
 // 		if err != nil {
-// 			log.Println("err: Failed to save", err)
+// 			logger.Println("err: Failed to save", err)
 // 		}
 //
 // 		err = db.db.Delete("games", fmt.Sprintf("%d_%d_NA1", g.GameID, 34178787))
 // 		if err != nil {
-// 			log.Println("err: failed to delete old game", g.GameID)
+// 			logger.Println("err: failed to delete old game", g.GameID)
 // 			continue
 // 		}
 // 	}
@@ -79,7 +78,7 @@ func (db *lolCache) GetGames(accountID int64, currentPlatformID string) ([]Game,
 		var game Game
 		err := json.Unmarshal([]byte(gameData), &game)
 		if err != nil {
-			log.Println("err: Errored converting to json from string in get games", err)
+			logger.Println("err: Errored converting to json from string in get games", err)
 			continue
 		}
 		// for _, sum := range game.ParticipantIdentities {
@@ -123,7 +122,7 @@ func (db *lolCache) TransferFromLocalToMongo(collection string) ([]string, error
 				for game := range games {
 					err := mongo.SaveGame(game, game.PlatformID)
 					if err != nil {
-						log.Println(err)
+						logger.Println(err)
 					}
 				}
 			}(gameChan)
@@ -148,7 +147,7 @@ func (db *lolCache) TransferFromLocalToMongo(collection string) ([]string, error
 		var game Game
 		err = json.Unmarshal(gameData, &game)
 		if err != nil {
-			log.Println("err: Errored converting to json from string in get games", err)
+			logger.Println("err: Errored converting to json from string in get games", err)
 			continue
 		}
 		fmt.Fprintf(os.Stdout, "CurrentID: %d Done: %d\r", game.GameID, len(records))

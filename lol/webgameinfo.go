@@ -79,7 +79,7 @@ func (c *Client) WebMatch(gameID int64, currentPlatformID string) (*Game, error)
 	}
 	err = c.cache.SaveGame(game, currentPlatformID)
 	if err != nil {
-		// log.Println("err: Failed to save game to db / cache", err)
+		// logger.Println("err: Failed to save game to db / cache", err)
 	}
 	return &game, nil
 }

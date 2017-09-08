@@ -37,7 +37,7 @@ func (c *Client) GetAllGames(accountID int64, platformID string) ([]Game, error)
 				break
 			}
 		}
-		if c.Debug {
+		if Debug {
 			fmt.Fprintf(os.Stdout, "Len Games: %d IndexStart: %d IndexEnd: %d GamesCount: %d Player: %s\r", len(games), info.Games.GameIndexBegin, info.Games.GameIndexEnd, info.Games.GameCount, player)
 		}
 	}
@@ -80,7 +80,7 @@ func (c *Client) GetAllGamesLimitPatch(accountID int64, platformID string, patch
 				break
 			}
 		}
-		if c.Debug {
+		if Debug {
 			fmt.Fprintf(os.Stdout, "Len Games: %d IndexStart: %d IndexEnd: %d GamesCount: %d Player: %s\r", len(games), info.Games.GameIndexBegin, info.Games.GameIndexEnd, info.Games.GameCount, player)
 		}
 	}

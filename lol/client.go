@@ -2,7 +2,6 @@ package lol
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"sync/atomic"
@@ -14,8 +13,9 @@ type Client struct {
 	cache             lolStorer
 	requestsMade      *int64
 	requestsSucceeded *int64
-	Debug             bool
 }
+
+var Debug bool
 
 func NewClient() (*Client, error) {
 	cache, err := NewLolMongo()
@@ -46,7 +46,7 @@ func (c *Client) Get(url string) (*http.Response, error) {
 	// 	r.Header.Add("X-Riot-Token", os.Getenv("X_Riot_Token"))
 	// }
 	resp, err := c.client.Do(r)
-	if c.Debug {
+	if Debug {
 		fmt.Fprintf(os.Stdout, "\t\t\t\t\t\t\t\t\t\t\tRequests Made: %d Requests Succeeded: %d\r", atomic.AddInt64(c.requestsMade, 1), atomic.LoadInt64(c.requestsSucceeded))
 	}
 	if err != nil {
@@ -55,14 +55,10 @@ func (c *Client) Get(url string) (*http.Response, error) {
 	switch resp.StatusCode {
 	case http.StatusTooManyRequests:
 		time.Sleep(time.Second * 2)
-		if c.Debug {
-			fmt.Fprintf(os.Stdout, "debug: slow down charlie.\r")
-		}
+		logger.Println("trace: slow down charlie.\r")
 		return c.Get(url)
 	case http.StatusNotFound:
-		if c.Debug {
-			log.Println("\nerr: not found", url)
-		}
+		logger.Println("err: not found", url)
 		return resp, err
 	}
 	atomic.AddInt64(c.requestsSucceeded, 1)
