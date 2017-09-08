@@ -9,25 +9,33 @@ import (
 )
 
 type lolMongo struct {
-	session *mgo.Session
-	db      *mgo.Database
-	games   *mgo.Collection
-	players *mgo.Collection
+	session        *mgo.Session
+	db             *mgo.Database
+	games          *mgo.Collection
+	players        *mgo.Collection
+	playersVisited *mgo.Collection
 }
 
 var _ lolStorer = &lolMongo{}
 
 func NewLolMongo() (lolStorer, error) {
-	session, err := mgo.Dial("linode.jhrb.us:27017")
+	session, err := mgo.Dial("localhost:27017")
+	// session, err := mgo.Dial("linode.jhrb.us:27017")
 	if err != nil {
 		return nil, err
 	}
-	log.Println(session.DB("lol").C("games").Count())
+	n, _ := session.DB("lol").C("games").Count()
+	log.Printf("games: %d", n)
+	n, _ = session.DB("lol").C("players").Count()
+	log.Printf("Left to visit: %d", n)
+	n, _ = session.DB("lol").C("playersvisited").Count()
+	log.Printf("Visited: %d", n)
 	return &lolMongo{
 		session,
 		session.DB("lol"),
 		session.DB("lol").C("games"),
 		session.DB("lol").C("players"),
+		session.DB("lol").C("playersvisited"),
 	}, nil
 }
 
@@ -61,18 +69,22 @@ type PlayerWithVisited struct {
 }
 
 func (db *lolMongo) StorePlayer(p Player, gotMatches bool) error {
-	n, _ := db.games.Find(bson.M{"accountid": p.AccountID}).Count()
+	n, _ := db.playersVisited.Find(bson.M{"accountid": p.AccountID}).Count()
 	if n == 0 {
-		return db.players.Insert(&PlayerWithVisited{p, false})
+		return db.players.Insert(&p)
 	}
 	return nil
 }
-func (db *lolMongo) GetPlayersToVisit() ([]PlayerWithVisited, error) {
-	var players []PlayerWithVisited
-	err := db.players.Find(bson.M{"visited": false}).Limit(1000).All(&players)
+func (db *lolMongo) GetPlayersToVisit() ([]Player, error) {
+	var players []Player
+	err := db.players.Find(bson.M{"platformid": "NA1"}).Limit(1000).All(&players)
 	return players, err
 }
 
-func (db *lolMongo) UpdatePlayer(p PlayerWithVisited) error {
-	return db.players.Update(bson.M{"accountid": p.AccountID}, &p)
+func (db *lolMongo) VisitPlayer(p Player) error {
+	err := db.players.Remove(bson.M{"accountid": p.AccountID})
+	if err != nil {
+		return err
+	}
+	return db.playersVisited.Insert(&p)
 }

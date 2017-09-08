@@ -162,10 +162,10 @@ func (db *lolCache) StorePlayer(p Player, gotMatches bool) error {
 	return errors.New("NOt implemented lolcache StorePlayer")
 }
 
-func (db *lolCache) GetPlayersToVisit() ([]PlayerWithVisited, error) {
+func (db *lolCache) GetPlayersToVisit() ([]Player, error) {
 	return nil, errors.New("NOt implemented lolcache GetPlayersToVisit")
 }
 
-func (db *lolCache) UpdatePlayer(p PlayerWithVisited) error {
+func (db *lolCache) VisitPlayer(p Player) error {
 	return errors.New("NOt implemented lolcache UpdatePlayer")
 }
