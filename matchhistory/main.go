@@ -28,6 +28,7 @@ func main() {
 	log.Println("Starting scraping forever...")
 	if len(os.Args) == 2 && os.Args[1] == "-w" {
 		c.GetCache().Stats()
+		os.Exit(0)
 	}
 	for matchesFarmed < 5000000 {
 		player, err = c.GetCache().GetPlayerToVisit()
@@ -47,15 +48,14 @@ func main() {
 		for _, g := range games {
 			id := g.GameID
 			if c.HaveMatch(id) {
+				fmt.Fprintf(os.Stdout, "\rSum:\t%s\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", player.SummonerName, id, matchesFarmed, sumsVisited)
 				continue
 			}
 			game, err = c.WebMatch(g.GameID, g.PlatformID, false)
 			if !game.Cached {
 				matchesFarmed++
-				continue
 			}
 			fmt.Fprintf(os.Stdout, "\rSum:\t%s\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", player.SummonerName, id, matchesFarmed, sumsVisited)
-			// log.Println("Farmed", matchesFarmed)
 			if err != nil {
 				log.Println("err: Failed to get match:", id, err)
 				continue
