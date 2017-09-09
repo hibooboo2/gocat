@@ -44,7 +44,7 @@ func (c *Client) GetAllGames(accountID int64, platformID string) ([]Game, error)
 	return games, nil
 }
 
-func (c *Client) GetAllGamesLimitPatch(accountID int64, platformID string, patch string) ([]Game, error) {
+func (c *Client) GetAllGamesLimitPatch(accountID int64, platformID string, patch string, limitAmt int) ([]Game, error) {
 	var games []Game
 	var info *GamesInfoWebUiResponse
 	var err error
@@ -64,7 +64,7 @@ func (c *Client) GetAllGamesLimitPatch(accountID int64, platformID string, patch
 
 	for info.Games.GameIndexEnd < info.Games.GameCount-1 {
 		for _, game := range info.Games.Games {
-			if !strings.HasPrefix(game.GameVersion, patch) {
+			if !strings.HasPrefix(game.GameVersion, patch) || len(games) > limitAmt {
 				return games, nil
 			}
 			games = append(games, game)
