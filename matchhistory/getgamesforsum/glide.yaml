@@ -1,0 +1,6 @@
+package: github.com/hibooboo2/gocat/matchhistory/getgamesforsum
+import:
+- package: github.com/comail/colog
+- package: github.com/hibooboo2/gocat
+  subpackages:
+  - lol

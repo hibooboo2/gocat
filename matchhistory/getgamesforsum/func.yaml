@@ -1,0 +1,4 @@
+name: getgamesforsum
+version: 0.0.4
+runtime: go
+entrypoint: ./func

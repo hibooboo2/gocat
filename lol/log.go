@@ -7,12 +7,20 @@ import (
 	"github.com/comail/colog"
 )
 
-var logger *log.Logger
+var (
+	logger    *log.Logger
+	logWriter *colog.CoLog
+)
 
 func init() {
-	cologer := colog.NewCoLog(os.Stdout, "lolapi:", log.Lshortfile)
-	cologer.SetDefaultLevel(colog.LTrace)
-	cologer.SetMinLevel(colog.LDebug)
-	logger = log.New(cologer, "", 0)
+	logWriter = colog.NewCoLog(os.Stdout, "lolapi:", log.Lshortfile)
+	logWriter.SetDefaultLevel(colog.LTrace)
+	logWriter.SetMinLevel(colog.LDebug)
+	logger = log.New(logWriter, "", 0)
 	logger.Println("Logger initialized for lolapi.")
+}
+
+// SetLogLevel Set level for logger
+func SetLogLevel(level colog.Level) {
+	logWriter.SetMinLevel(level)
 }

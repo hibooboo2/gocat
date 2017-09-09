@@ -1,0 +1,17 @@
+hash: 8cf97a34454127a814e35e0dfe1dc20fc91bcf271c3f510712ac2952ac6cb361
+updated: 2017-09-08T23:50:38.533823245-07:00
+imports:
+- name: github.com/comail/colog
+  version: fba8e7b1f46c3607f09760ce3880066e7ff57c5a
+- name: github.com/hibooboo2/gocat
+  version: 00d49f4c515b2a666e221305fa21bc17a615dfee
+  subpackages:
+  - lol
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
+testImports: []
