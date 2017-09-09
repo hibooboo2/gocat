@@ -20,7 +20,10 @@ func main() {
 
 	var found int
 	for _, g := range games {
-		game, _ := c.WebMatch(g.GameID, g.PlatformID)
+		if c.HaveMatch(g.GameID) {
+			continue
+		}
+		game, _ := c.WebMatch(g.GameID, g.PlatformID, true)
 		if !game.Cached {
 			found++
 		}
