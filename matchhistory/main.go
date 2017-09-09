@@ -85,7 +85,7 @@ func seed() {
 	}
 	var thisSum lol.Player
 	for _, game := range games {
-		game, _ := c.WebMatch(game.GameID, game.ParticipantIdentities[0].Player.CurrentPlatformID)
+		game, _ := c.WebMatch(game.GameID, game.ParticipantIdentities[0].Player.CurrentPlatformID, true)
 		for _, sum := range game.ParticipantIdentities {
 			if sum.Player.AccountID != accountID {
 				c.GetCache().StorePlayer(sum.Player, false)
