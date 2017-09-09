@@ -34,7 +34,10 @@ func main() {
 		player, err = c.GetCache().GetPlayerToVisit()
 		if err != nil {
 			log.Println(err)
-			continue
+			log.Println("Seeding....")
+			seed()
+			log.Println("Seeded")
+			break
 		}
 		sumsVisited++
 
@@ -76,7 +79,8 @@ func main() {
 
 func seed() {
 	// accountID := int64(34178787) //sir yogi bear
-	accountID := int64(44278412)
+	// accountID := int64(44278412)
+	accountID := int64(202988570)
 	// accountID := int64(42795563)
 	// accountID := int64(205659322) // Sir fxwright
 	games, err := c.GetAllGamesLimitPatch(accountID, "NA1", "7.17")

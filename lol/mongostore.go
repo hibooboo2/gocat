@@ -123,11 +123,11 @@ func (db *lolMongo) Stats() {
 	var diffs []int
 	prevCount, _ := db.games.Count()
 	for {
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Second)
 		g, _ := db.games.Count()
 		diff := g - prevCount
 		diffs = append(diffs, diff)
-		rate := avg(diffs) * 2
+		rate := avg(diffs)
 		if len(diffs) > 60 {
 			diffs = diffs[:30]
 		}
