@@ -15,7 +15,7 @@ func main() {
 	defer c.Close()
 	p, err := c.GetCache().GetPlayerToVisit()
 	handleErr(err)
-	games, err := c.GetAllGamesLimitPatch(p.AccountID, "NA", "7.17")
+	games, err := c.GetAllGamesLimitPatch(p.AccountID, "NA1", "7.17", 20)
 	handleErr(err)
 
 	var found int
