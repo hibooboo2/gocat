@@ -85,3 +85,7 @@ func (c *Client) WebMatch(gameID int64, currentPlatformID string) (*Game, error)
 	}
 	return &game, nil
 }
+
+func (c *Client) HaveMatch(gameID int64) bool {
+	return c.cache.CheckGameStored(gameID)
+}

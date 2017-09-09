@@ -14,6 +14,7 @@ type lolMongo struct {
 	session        *mgo.Session
 	db             *mgo.Database
 	games          *mgo.Collection
+	gamesid        *mgo.Collection
 	players        *mgo.Collection
 	playersVisited *mgo.Collection
 }
@@ -42,6 +43,7 @@ func NewLolMongo(host string, port int) (lolStorer, error) {
 		session,
 		session.DB("lol"),
 		session.DB("lol").C("games"),
+		session.DB("lol").C("gamesid"),
 		session.DB("lol").C("players"),
 		session.DB("lol").C("playersvisited"),
 	}, nil
@@ -55,14 +57,27 @@ func NewLolMongoWAccess(host string, port int) (*lolMongo, error) {
 func (db *lolMongo) GetGame(gameID int64, currentPlatformID string) (Game, error) {
 	var game Game
 	// err := db.db.Read("games", fmt.Sprintf("%d_%s", gameID, currentPlatformID), &game)
+	n, _ := db.gamesid.Find(bson.M{"gameid": gameID}).Count()
+	if n == 0 {
+		return game, errors.New("Game Not Found in DB")
+	}
 	err := db.games.Find(bson.M{"gameid": gameID, "platformid": currentPlatformID}).One(&game)
 	return game, err
+}
+
+func (db *lolMongo) CheckGameStored(gameID int64) bool {
+	n, err := db.gamesid.Find(bson.M{"gameid": gameID}).Count()
+	return err == nil && n > 0
 }
 
 func (db *lolMongo) SaveGame(game Game, currentPlatformID string) error {
 	// return db.db.Write("games", fmt.Sprintf("%d_%s", game.GameID, currentPlatformID), &game)
 	n, _ := db.games.Find(bson.M{"gameid": game.GameID, "platformid": currentPlatformID}).Count()
 	if n == 0 {
+		_, err := db.games.Upsert(bson.M{"gameid": game.GameID}, bson.M{"gameid": game.GameID})
+		if err != nil {
+			logger.Println("alert: Cailed to upsert id to cache table", err)
+		}
 		return db.games.Insert(&game)
 	}
 	return nil
@@ -218,4 +233,35 @@ func (db *lolMongo) TransferToAnother(host string, port int) error {
 	}
 
 	return nil
+}
+
+func (db *lolMongo) GameIDSToIDTable() {
+	batchSize := 100
+	totalGames, _ := db.games.Find(nil).Count()
+	var count int
+	for count < totalGames {
+		var games []Game
+		err := db.games.Find(nil).Skip(count).Limit(batchSize).All(&games)
+		if err != nil {
+			logger.Println("err:", err)
+			return
+		}
+		count += len(games)
+		logger.Println("Got batch", count)
+		b := db.gamesid.Bulk()
+		for _, game := range games {
+			b.Insert(bson.M{"gameid": game.GameID})
+		}
+		res, err := b.Run()
+		if err != nil {
+			logger.Println("err:", err)
+			return
+		}
+		logger.Println("Inserted batch", count)
+		if res.Matched+res.Modified != len(games) {
+			logger.Printf("May have skipped games. Games: %d Matched+Mod: %d", len(games), res.Matched+res.Modified)
+		}
+		games = nil
+	}
+	logger.Println(db.gamesid.Find(nil).Count())
 }

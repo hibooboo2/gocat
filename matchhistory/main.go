@@ -46,9 +46,13 @@ func main() {
 		var game *lol.Game
 		for _, g := range games {
 			id := g.GameID
+			if c.HaveMatch(id) {
+				continue
+			}
 			game, err = c.WebMatch(g.GameID, g.PlatformID)
 			if !game.Cached {
 				matchesFarmed++
+				continue
 			}
 			fmt.Fprintf(os.Stdout, "\rSum:\t%s\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", player.SummonerName, id, matchesFarmed, sumsVisited)
 			// log.Println("Farmed", matchesFarmed)
