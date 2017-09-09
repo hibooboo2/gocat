@@ -49,7 +49,7 @@ func main() {
 			if c.HaveMatch(id) {
 				continue
 			}
-			game, err = c.WebMatch(g.GameID, g.PlatformID)
+			game, err = c.WebMatch(g.GameID, g.PlatformID, false)
 			if !game.Cached {
 				matchesFarmed++
 				continue
