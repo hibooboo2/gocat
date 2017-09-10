@@ -9,6 +9,7 @@ import (
 )
 
 func scrap() error {
+	c := lol.DefaultClient()
 	var matchesFarmed, sumsVisited int
 	var player lol.Player
 	var err error
