@@ -31,7 +31,7 @@ func main() {
 		os.Exit(0)
 	}
 	log.Println("Seeding....")
-	seed()
+	seed(220448739)
 	log.Println("Seeded")
 	for matchesFarmed < 5000000 {
 		player, err = c.GetCache().GetPlayerToVisit()
@@ -77,13 +77,13 @@ func main() {
 	}
 }
 
-func seed() {
+func seed(accountID int64) {
 	// accountID := int64(34178787) //sir yogi bear
 	// accountID := int64(44278412)
-	accountID := int64(202968570)
+	// accountID := int64(202968570)
 	// accountID := int64(42795563)
 	// accountID := int64(205659322) // Sir fxwright
-	games, err := c.GetAllGamesLimitPatch(accountID, "NA1", "7.17", 20)
+	games, err := c.GetAllGamesLimitPatch(accountID, "NA1", "7", 3000)
 	if err != nil {
 		log.Fatalln("Failed to get history: ", err)
 	}
