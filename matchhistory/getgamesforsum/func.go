@@ -19,6 +19,7 @@ func main() {
 	handleErr(err)
 
 	var found int
+	sums := make(map[int64]lol.Player)
 	for _, g := range games {
 		if c.HaveMatch(g.GameID) {
 			continue
@@ -27,6 +28,15 @@ func main() {
 		if !game.Cached {
 			found++
 		}
+		for _, sum := range game.ParticipantIdentities {
+			_, ok := sums[sum.Player.AccountID]
+			if !ok && sum.Player.AccountID != p.AccountID {
+				sums[sum.Player.AccountID] = sum.Player
+			}
+		}
+	}
+	for _, sum := range sums {
+		c.GetCache().StorePlayer(sum)
 	}
 	log.Printf(`{"found":%d}`, found)
 }

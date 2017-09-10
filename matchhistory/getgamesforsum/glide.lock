@@ -1,10 +1,10 @@
 hash: 8cf97a34454127a814e35e0dfe1dc20fc91bcf271c3f510712ac2952ac6cb361
-updated: 2017-09-09T05:51:46.171238282-07:00
+updated: 2017-09-10T10:44:06.567857182-07:00
 imports:
 - name: github.com/comail/colog
   version: fba8e7b1f46c3607f09760ce3880066e7ff57c5a
 - name: github.com/hibooboo2/gocat
-  version: e30209fadc78dd8ef09b9f890daca80caffb73a2
+  version: 3c76c6d73114047cb4a1a91ad76dcd34af655d75
   subpackages:
   - lol
 - name: gopkg.in/mgo.v2
