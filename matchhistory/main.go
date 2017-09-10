@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -21,82 +20,44 @@ func init() {
 
 func main() {
 	defer c.Close()
-
-	var matchesFarmed, sumsVisited int
-	var player lol.Player
-	var err error
 	log.Println("Starting scraping forever...")
-	if len(os.Args) == 2 && os.Args[1] == "-w" {
-		c.GetCache().Stats()
+	if len(os.Args) != 2 {
+		log.Println("Invalid args:", os.Args)
 		os.Exit(0)
 	}
-	log.Println("Seeding....")
-	seed(220448739)
-	log.Println("Seeded")
-	for matchesFarmed < 5000000 {
-		player, err = c.GetCache().GetPlayerToVisit()
-		if err != nil {
-			log.Println(err)
-			break
-		}
-		sumsVisited++
 
-		games, err := c.GetAllGamesLimitPatch(player.AccountID, player.CurrentPlatformID, "7.17.", 20)
-		if err != nil {
-			log.Println(err)
-			continue
+	switch os.Args[1] {
+	case "-w":
+		c.GetCache().Stats()
+	case "seed":
+		seed(220448739)
+	case "scrap":
+		if err := scrap(); err != nil {
+			log.Fatalln(err)
 		}
-		// log.Println("Got games for: ", player.SummonerName, len(games))
-		var game *lol.Game
-		for _, g := range games {
-			id := g.GameID
-			if c.HaveMatch(id) {
-				fmt.Fprintf(os.Stdout, "\rSum:\t%s\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", player.SummonerName, id, matchesFarmed, sumsVisited)
-				continue
-			}
-			game, err = c.WebMatch(g.GameID, g.PlatformID, false)
-			if !game.Cached {
-				matchesFarmed++
-			}
-			fmt.Fprintf(os.Stdout, "\rSum:\t%s\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", player.SummonerName, id, matchesFarmed, sumsVisited)
-			if err != nil {
-				log.Println("err: Failed to get match:", id, err)
-				continue
-			}
-			for _, sum := range game.ParticipantIdentities {
-				if sum.Player.AccountID != player.AccountID {
-					c.GetCache().StorePlayer(sum.Player, false)
-				}
-			}
-			// log.Println("Got game: ", game.GameID)
-		}
-
-	}
-	if err != nil {
-		log.Fatalln(err)
+	default:
+		log.Println(os.Args[1])
 	}
 }
 
 func seed(accountID int64) {
-	// accountID := int64(34178787) //sir yogi bear
-	// accountID := int64(44278412)
-	// accountID := int64(202968570)
-	// accountID := int64(42795563)
-	// accountID := int64(205659322) // Sir fxwright
+	log.Println("Seeding....")
 	games, err := c.GetAllGamesLimitPatch(accountID, "NA1", "7", 3000)
 	if err != nil {
 		log.Fatalln("Failed to get history: ", err)
 	}
-	var thisSum lol.Player
+	sums := make(map[int64]lol.Player)
 	for _, game := range games {
 		game, _ := c.WebMatch(game.GameID, game.ParticipantIdentities[0].Player.CurrentPlatformID, true)
 		for _, sum := range game.ParticipantIdentities {
-			if sum.Player.AccountID != accountID {
-				c.GetCache().StorePlayer(sum.Player, false)
-			} else {
-				thisSum = sum.Player
-			}
+			sums[sum.Player.AccountID] = sum.Player
 		}
 	}
-	c.GetCache().StorePlayer(thisSum, true)
+
+	c.GetCache().StorePlayer(sums[accountID])
+	delete(sums, accountID)
+	for _, sum := range sums {
+		c.GetCache().StorePlayer(sum)
+	}
+	log.Println("Seeded")
 }

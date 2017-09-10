@@ -91,7 +91,7 @@ func (db *lolMongo) Close() {
 	db.session.Close()
 }
 
-func (db *lolMongo) StorePlayer(p Player, gotMatches bool) error {
+func (db *lolMongo) StorePlayer(p Player) error {
 	n, _ := db.playersVisited.Find(bson.M{"accountid": p.AccountID}).Count()
 	if n == 0 {
 		return db.players.Insert(&p)
