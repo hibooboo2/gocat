@@ -29,12 +29,10 @@ func main() {
 			found++
 		}
 		for _, sum := range game.ParticipantIdentities {
-			_, ok := sums[sum.Player.AccountID]
-			if !ok && sum.Player.AccountID != p.AccountID {
-				sums[sum.Player.AccountID] = sum.Player
-			}
+			sums[sum.Player.AccountID] = sum.Player
 		}
 	}
+	delete(sums, p.AccountID)
 	for _, sum := range sums {
 		c.GetCache().StorePlayer(sum)
 	}
