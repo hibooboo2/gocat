@@ -51,17 +51,19 @@ type ParticipantIdentity struct {
 	Player        Player `json:"player"`
 }
 
-// WebMatchHistory circumvent riots api throttling. Or at least attepmt to. This is using the endpoint that the web ui uses. No docs for it.
-func (c *Client) WebMatch(gameID int64, currentPlatformID string, skipCache bool) (*Game, error) {
+// WebMatch circumvent riots api throttling. Or at least attepmt to. This is using the endpoint that the web ui uses. No docs for it.
+func (c *Client) WebMatch(gameID int64, currentPlatformID string, useCache bool) (*Game, error) {
 	var game Game
 	var err error
-	if skipCache {
+	if useCache {
+		logger.Println("Trying cache")
 		game, err = c.cache.GetGame(gameID, currentPlatformID)
 		if err == nil {
 			game.Cached = true
 			return &game, nil
 		}
 	}
+	logger.Println("Requesting")
 	query := make(url.Values)
 	// query.Add("visibleAccountId", fmt.Sprintf(`%d`, accountID))
 	query.Add("visiblePlatformId", currentPlatformID)
@@ -91,5 +93,5 @@ func (c *Client) WebMatch(gameID int64, currentPlatformID string, skipCache bool
 }
 
 func (c *Client) HaveMatch(gameID int64) bool {
-	return c.cache.CheckGameStored(gameID)
+	return c.cache.HaveGame(gameID)
 }

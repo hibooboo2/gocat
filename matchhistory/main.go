@@ -13,12 +13,12 @@ func init() {
 
 func main() {
 	defer lol.DefaultClient().Close()
-	log.Println("Starting scraping forever...")
+	// lol.SetLogLevel(colog.LTrace)
+	lol.DefaultClient().GetCache().LoadAllGameIDS()
 	if len(os.Args) != 2 {
 		log.Println("Invalid args:", os.Args)
 		os.Exit(0)
 	}
-
 	switch os.Args[1] {
 	case "-w":
 		lol.DefaultClient().GetCache().Stats()

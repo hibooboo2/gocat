@@ -7,6 +7,10 @@ var (
 	one           sync.Once
 )
 
+const (
+	NA1 = "NA1"
+)
+
 // DefaultClient returns the default client
 func DefaultClient() *Client {
 	one.Do(func() {

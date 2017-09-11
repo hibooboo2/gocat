@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// GetAllGames Gets all the games forever for an account.
 func (c *Client) GetAllGames(accountID int64, platformID string) ([]Game, error) {
 	var games []Game
 	var info *GamesInfoWebUiResponse
@@ -14,8 +15,8 @@ func (c *Client) GetAllGames(accountID int64, platformID string) ([]Game, error)
 	if err != nil {
 		switch platformID {
 		case "NA":
-			platformID = "NA1"
-		case "NA1":
+			platformID = NA1
+		case NA1:
 			platformID = "NA"
 		}
 		info, err = c.WebMatchHistory(accountID, platformID, 0)
@@ -44,6 +45,7 @@ func (c *Client) GetAllGames(accountID int64, platformID string) ([]Game, error)
 	return games, nil
 }
 
+// GetAllGamesLimitPatch gets all the games for a player from current patch.
 func (c *Client) GetAllGamesLimitPatch(accountID int64, platformID string, patch string, limitAmt int) ([]Game, error) {
 	var games []Game
 	var info *GamesInfoWebUiResponse
@@ -52,8 +54,8 @@ func (c *Client) GetAllGamesLimitPatch(accountID int64, platformID string, patch
 	if err != nil {
 		switch platformID {
 		case "NA":
-			platformID = "NA1"
-		case "NA1":
+			platformID = NA1
+		case NA1:
 			platformID = "NA"
 		}
 		info, err = c.WebMatchHistory(accountID, platformID, 0)

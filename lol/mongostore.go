@@ -17,6 +17,7 @@ type lolMongo struct {
 	gamesid        *mgo.Collection
 	players        *mgo.Collection
 	playersVisited *mgo.Collection
+	lolCache
 }
 
 var _ lolStorer = &lolMongo{}
@@ -39,14 +40,16 @@ func NewLolMongo(host string, port int) (lolStorer, error) {
 	logger.Printf("debug:left to visit: %d", n)
 	n, _ = session.DB("lol").C("playersvisited").Count()
 	logger.Printf("debug: visited: %d", n)
-	return &lolMongo{
-		session,
-		session.DB("lol"),
-		session.DB("lol").C("games"),
-		session.DB("lol").C("gamesid"),
-		session.DB("lol").C("players"),
-		session.DB("lol").C("playersvisited"),
-	}, nil
+	mongo := &lolMongo{
+		session:        session,
+		db:             session.DB("lol"),
+		games:          session.DB("lol").C("games"),
+		gamesid:        session.DB("lol").C("gamesid"),
+		players:        session.DB("lol").C("players"),
+		playersVisited: session.DB("lol").C("playersvisited"),
+	}
+	mongo.lolCache = &memCache{}
+	return mongo, nil
 }
 
 func NewLolMongoWAccess(host string, port int) (*lolMongo, error) {
@@ -62,29 +65,41 @@ func (db *lolMongo) GetGame(gameID int64, currentPlatformID string) (Game, error
 		return game, errors.New("Game Not Found in DB")
 	}
 	err := db.games.Find(bson.M{"gameid": gameID, "platformid": currentPlatformID}).One(&game)
+	db.lolCache.AddGame(gameID)
 	return game, err
 }
 
 func (db *lolMongo) CheckGameStored(gameID int64) bool {
+	if db.lolCache.HaveGame(gameID) {
+		return true
+	}
 	n, err := db.gamesid.Find(bson.M{"gameid": gameID}).Count()
-	return err == nil && n > 0
+	have := err == nil && n > 0
+	if have {
+		db.lolCache.AddGame(gameID)
+	}
+	return have
 }
 
 func (db *lolMongo) SaveGame(game Game, currentPlatformID string) error {
-	// return db.db.Write("games", fmt.Sprintf("%d_%s", game.GameID, currentPlatformID), &game)
-	n, _ := db.games.Find(bson.M{"gameid": game.GameID, "platformid": currentPlatformID}).Count()
+	if db.lolCache.HaveGame(game.GameID) {
+		return nil
+	}
+	n, _ := db.gamesid.Find(bson.M{"gameid": game.GameID}).Count()
 	if n == 0 {
-		_, err := db.games.Upsert(bson.M{"gameid": game.GameID}, bson.M{"gameid": game.GameID})
+		_, err := db.gamesid.Upsert(bson.M{"gameid": game.GameID}, bson.M{"gameid": game.GameID})
 		if err != nil {
-			logger.Println("alert: Cailed to upsert id to cache table", err)
+			return err
 		}
-		return db.games.Insert(&game)
+
+		err = db.games.Insert(&game)
+		if err != nil {
+			return err
+		}
+		db.lolCache.AddGame(game.GameID)
+		return nil
 	}
 	return nil
-}
-
-func (db *lolMongo) GetGames(accountID int64, currentPlatformID string) ([]Game, error) {
-	return nil, errors.New("Not implemented: get games mongo store")
 }
 
 func (db *lolMongo) Close() {
@@ -92,29 +107,41 @@ func (db *lolMongo) Close() {
 }
 
 func (db *lolMongo) StorePlayer(p Player) error {
+	if db.lolCache.HaveVisitedPlayer(p.AccountID) {
+		return nil
+	}
+	db.lolCache.Player(p.AccountID)
 	n, _ := db.playersVisited.Find(bson.M{"accountid": p.AccountID}).Count()
 	if n == 0 {
 		return db.players.Insert(&p)
 	}
+	db.lolCache.VisitedPlayer(p.AccountID)
 	return nil
 }
-func (db *lolMongo) GetPlayersToVisit() ([]Player, error) {
-	var players []Player
-	err := db.players.Find(bson.M{"platformid": "NA1"}).Limit(1000).All(&players)
-	return players, err
-}
 
-func (db *lolMongo) GetPlayerToVisit() (Player, error) {
+func (db *lolMongo) GetPlayerToVisit() int64 {
+	id := db.lolCache.GetPlayerToVisit()
+	if id != 0 {
+		return id
+	}
 	var p Player
-	err := db.players.Find(bson.M{"platformid": "NA1"}).One(&p)
+	err := db.players.Find(bson.M{"platformid": NA1}).One(&p)
+	if err != nil {
+		logger.Println("err: Couldnt find a player:", err)
+		return 0
+	}
 	db.VisitPlayer(p)
-	return p, err
+	return p.AccountID
 }
 
 func (db *lolMongo) VisitPlayer(p Player) error {
+	if db.lolCache.HaveVisitedPlayer(p.AccountID) {
+		return nil
+	}
+	db.lolCache.VisitedPlayer(p.AccountID)
 	err := db.players.Remove(bson.M{"accountid": p.AccountID})
 	if err != nil {
-		return err
+		logger.Println("err: While trying to remove player: ", err)
 	}
 	return db.playersVisited.Insert(&p)
 }
@@ -125,6 +152,7 @@ func (db *lolMongo) Stats() {
 	for {
 		time.Sleep(time.Second)
 		g, _ := db.games.Count()
+		gid, _ := db.gamesid.Count()
 		diff := g - prevCount
 		diffs = append(diffs, diff)
 		rate := avg(diffs)
@@ -134,8 +162,55 @@ func (db *lolMongo) Stats() {
 		prevCount = g
 		p, _ := db.players.Count()
 		pv, _ := db.playersVisited.Count()
-		fmt.Fprintf(os.Stdout, "GameAddRate %0f/s\t Games: %d\t Players %d\t PlayersVisited %d\r", rate, g, p, pv)
+		fmt.Fprintf(os.Stdout, "GameAddRate %0f/s\t Games: %d\t GameIDs: %d\t Players %d\t PlayersVisited %d\r", rate, g, gid, p, pv)
 	}
+}
+
+func (db *lolMongo) LoadAllGameIDS() {
+	var ids []bson.M
+	var err error
+	var id int64
+	n := 0
+	for err == nil {
+		err = db.gamesid.Find(nil).Limit(100).Skip(n * 100).All(&ids)
+		var gameID int64
+		for _, v := range ids {
+			id, ok := v["gameid"]
+			if !ok {
+				logger.Println("info: failed get gameid", v)
+				continue
+			}
+			gameID, ok = id.(int64)
+			if !ok {
+				logger.Println("info: failed cast gameid", v)
+				continue
+			}
+			db.lolCache.AddGame(gameID)
+		}
+		if id == gameID {
+			break
+		}
+		id = gameID
+		n++
+	}
+	count := 0
+	db.lolCache.(*memCache).games.Range(func(key interface{}, value interface{}) bool {
+		count++
+		logger.Println(key)
+		return true
+	})
+	logger.Println("info: Found ", count, " games")
+	var players []Player
+	db.playersVisited.Find(nil).Limit(1000).All(&players)
+	for _, p := range players {
+		db.lolCache.VisitedPlayer(p.AccountID)
+	}
+	playersFound := 0
+	db.lolCache.(*memCache).visited.Range(func(key interface{}, value interface{}) bool {
+		playersFound++
+		return true
+	})
+	logger.Println("info: Found:", playersFound, " players")
 }
 
 func avg(vals []int) float64 {
@@ -148,7 +223,6 @@ func avg(vals []int) float64 {
 }
 
 func (db *lolMongo) TransferToAnother(host string, port int) error {
-	// db.games.Find(bson.M{"platformid": "NA1"}).Limit(limit).Iter().
 	db2, err := NewLolMongoWAccess(host, port)
 	if err != nil {
 		return err
