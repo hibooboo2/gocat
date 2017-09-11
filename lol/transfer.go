@@ -2,6 +2,7 @@ package lol
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"gopkg.in/mgo.v2/bson"
@@ -95,6 +96,7 @@ func (db *lolMongo) TransferToAnother(host string, port int) error {
 }
 
 func (db *lolMongo) GameIDSToIDTable() {
+	log.Println(db.gamesid.DropCollection())
 	batchSize := 100
 	totalGames, _ := db.games.Find(nil).Count()
 	var count int
