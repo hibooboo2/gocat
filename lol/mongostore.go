@@ -201,12 +201,37 @@ func (db *lolMongo) LoadAllGameIDS() {
 	})
 	logger.Println("info: Found ", count, " games")
 	var players []Player
-	db.playersVisited.Find(nil).Limit(1000).All(&players)
-	for _, p := range players {
-		db.lolCache.VisitedPlayer(p.AccountID)
+	n = 0
+	var pid int64
+	for err == nil {
+		err = db.playersVisited.Find(nil).Limit(100).Skip(n * 100).All(&players)
+		for _, p := range players {
+			db.lolCache.VisitedPlayer(p.AccountID)
+		}
+		n++
+		if len(players) == 0 || pid == players[0].AccountID {
+			break
+		}
+		pid = players[0].AccountID
+	}
+	n = 0
+	for err == nil {
+		err = db.players.Find(nil).Limit(100).Skip(n * 100).All(&players)
+		for _, p := range players {
+			db.lolCache.VisitedPlayer(p.AccountID)
+		}
+		n++
+		if len(players) == 0 || pid == players[0].AccountID {
+			break
+		}
+		pid = players[0].AccountID
 	}
 	playersFound := 0
 	db.lolCache.(*memCache).visited.Range(func(key interface{}, value interface{}) bool {
+		playersFound++
+		return true
+	})
+	db.lolCache.(*memCache).toVisit.Range(func(key interface{}, value interface{}) bool {
 		playersFound++
 		return true
 	})
