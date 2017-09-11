@@ -11,7 +11,7 @@ import (
 
 func scrap() error {
 	c := lol.DefaultClient()
-	var matchesFarmed, sumsVisited int
+	var matchesFarmed, sumsVisited, fromCache int
 	var accountID int64
 	var err error
 	allSumsThisSession := make(map[int64]lol.Player)
@@ -23,7 +23,7 @@ func scrap() error {
 			return errors.New("No players to visit")
 		}
 		sumsVisited++
-		games, err := c.GetAllGamesLimitPatch(accountID, lol.NA1, "7.17.", 20)
+		games, err := c.GetAllGamesLimitPatch(accountID, lol.NA1, "7.17.", 1000)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -34,14 +34,15 @@ func scrap() error {
 			id := g.GameID
 			_, have := allGamesThisSession[id]
 			if have || c.HaveMatch(id) {
-				fmt.Fprintf(os.Stdout, "\rSum:\t%d\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", accountID, id, matchesFarmed, sumsVisited)
+				fromCache++
+				fmt.Fprintf(os.Stdout, "\rSum:\t%d\tGame:\t%d\tMatchesFarmed\t %d\tMatchesFromCache\t %d\tSumsVisited\t%d", accountID, id, matchesFarmed, fromCache, sumsVisited)
 				continue
 			}
 			game, err = c.WebMatch(g.GameID, g.PlatformID, false)
 			if !game.Cached {
 				matchesFarmed++
 			}
-			fmt.Fprintf(os.Stdout, "\rSum:\t%d\tGame:\t%d\tMatchesFarmed\t%d\tSumsVisited\t%d", accountID, id, matchesFarmed, sumsVisited)
+			fmt.Fprintf(os.Stdout, "\rSum:\t%d\tGame:\t%d\tMatchesFarmed\t %d\tMatchesFromCache\t %d\tSumsVisited\t%d", accountID, id, matchesFarmed, fromCache, sumsVisited)
 			if err != nil {
 				log.Println("err: Failed to get match:", id, err)
 				continue

@@ -9,7 +9,7 @@ import (
 func seed(accountID int64) {
 	c := lol.DefaultClient()
 	log.Println("Seeding....")
-	games, err := c.GetAllGamesLimitPatch(accountID, lol.NA1, "7", 700)
+	games, err := c.GetAllGamesLimitPatch(accountID, lol.NA1, "7", 1000)
 	if err != nil {
 		log.Fatalln("Failed to get history: ", err)
 	}
