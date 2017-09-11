@@ -13,9 +13,11 @@ func main() {
 	c, err := lol.NewClient()
 	handleErr(err)
 	defer c.Close()
-	p, err := c.GetCache().GetPlayerToVisit()
-	handleErr(err)
-	games, err := c.GetAllGamesLimitPatch(p.AccountID, NA1, "7.17", 20)
+	p := c.GetCache().GetPlayerToVisit()
+	if p == 0 {
+		log.Fatalln("No player gotten")
+	}
+	games, err := c.GetAllGamesLimitPatch(p, lol.NA1, "7.17", 20)
 	handleErr(err)
 
 	var found int
@@ -32,7 +34,7 @@ func main() {
 			sums[sum.Player.AccountID] = sum.Player
 		}
 	}
-	delete(sums, p.AccountID)
+	delete(sums, p)
 	for _, sum := range sums {
 		c.GetCache().StorePlayer(sum)
 	}
