@@ -1,12 +1,16 @@
 hash: 8cf97a34454127a814e35e0dfe1dc20fc91bcf271c3f510712ac2952ac6cb361
-updated: 2017-09-10T10:44:06.567857182-07:00
+updated: 2017-09-10T17:22:27.140745835-07:00
 imports:
 - name: github.com/comail/colog
   version: fba8e7b1f46c3607f09760ce3880066e7ff57c5a
 - name: github.com/hibooboo2/gocat
-  version: 3c76c6d73114047cb4a1a91ad76dcd34af655d75
+  version: 6b3d5980b42a5f61b7e5a9022987272cf26d1310
   subpackages:
   - lol
+- name: golang.org/x/sync
+  version: f52d1811a62927559de87708c8913c1650ce4f26
+  subpackages:
+  - syncmap
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
   subpackages:
