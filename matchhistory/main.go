@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/hibooboo2/gocat/lol"
 )
@@ -35,6 +38,19 @@ func main() {
 			log.Fatalln(err)
 		}
 		log.Println(db.TransferToAnother("", 27027))
+	case "random":
+		rand.Seed(time.Now().Unix())
+		start := time.Now()
+		games := make([]lol.Game, 5000000)
+		for i := 0; i < len(games); i++ {
+			g := games[i]
+			g.GameID = rand.Int63n(70000000)
+			games[i] = g
+		}
+		for _, g := range games {
+			fmt.Fprintf(os.Stdout, "ID: %d\r", g.GameID)
+		}
+		fmt.Printf("\nTook: %v Games: %d", time.Since(start), len(games))
 	default:
 		log.Println(os.Args[1])
 	}

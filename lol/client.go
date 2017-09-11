@@ -19,6 +19,7 @@ var Debug bool
 
 func NewClient() (*Client, error) {
 	cache, err := NewLolMongo("dev.jhrb.us", 27217)
+	// cache, err := NewLolMongo("192.168.1.170", 27027)
 	if err != nil {
 		return nil, err
 	}

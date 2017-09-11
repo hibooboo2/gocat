@@ -178,8 +178,9 @@ func (db *lolMongo) LoadAllGameIDS() {
 	var err error
 	var id int64
 	n := 0
+	batchSize := 2000
 	for err == nil {
-		err = db.gamesid.Find(nil).Limit(100).Skip(n * 100).All(&ids)
+		err = db.gamesid.Find(nil).Limit(batchSize).Skip(n * batchSize).All(&ids)
 		var gameID int64
 		for _, v := range ids {
 			id, ok := v["gameid"]
@@ -199,6 +200,7 @@ func (db *lolMongo) LoadAllGameIDS() {
 		}
 		id = gameID
 		n++
+		fmt.Fprintf(os.Stdout, "Game IDS found: %d\r", n*batchSize)
 	}
 	if err != nil {
 		logger.Println("err: After gamesid load:", err)
@@ -210,26 +212,28 @@ func (db *lolMongo) LoadAllGameIDS() {
 		return true
 	})
 	logger.Println("info: Found ", count, " games")
-	var players []Player
+	var playersVisited []Player
 	n = 0
 	for err == nil {
-		err = db.playersVisited.Find(nil).Limit(100).Skip(n * 100).All(&players)
-		for _, p := range players {
+		err = db.playersVisited.Find(nil).Limit(batchSize).Skip(n * batchSize).All(&playersVisited)
+		for _, p := range playersVisited {
 			db.lolCache.VisitedPlayer(p.AccountID)
 		}
 		n++
-		if len(players) == 0 {
+		fmt.Fprintf(os.Stdout, "PlayersVisited found: %d\r", n*batchSize)
+		if len(playersVisited) == 0 {
 			break
 		}
 		// pid = players[0].AccountID
+		fmt.Fprintf(os.Stdout, "PlayersVisited found: %d \tPlayerID: %d\t PlayerName: %s\r", n*batchSize, playersVisited[0].AccountID, playersVisited[0].SummonerName)
 	}
 	if err != nil {
 		logger.Println("err: After playersvisited load:", err)
 	}
 	n = 0
-	players = nil
+	var players []Player
 	for err == nil {
-		err = db.players.Find(nil).Limit(100).Skip(n * 100).All(&players)
+		err = db.players.Find(nil).Limit(batchSize).Skip(n * batchSize).All(&players)
 		for _, p := range players {
 			db.lolCache.Player(p.AccountID)
 		}
@@ -237,21 +241,25 @@ func (db *lolMongo) LoadAllGameIDS() {
 		if len(players) == 0 {
 			break
 		}
+		fmt.Fprintf(os.Stdout, "PlayersToVisit found: %d PlayerName: %s PlayerID: %d\r", n*batchSize, players[0].SummonerName, players[0].AccountID)
 		// pid = players[0].AccountID
 	}
 	if err != nil {
 		logger.Println("err: After playerstovisit load:", err)
 	}
 	playersFound := 0
+	counter := make(map[interface{}]interface{})
 	db.lolCache.(*memCache).visited.Range(func(key interface{}, value interface{}) bool {
 		playersFound++
+		counter[key] = value
 		return true
 	})
 	db.lolCache.(*memCache).toVisit.Range(func(key interface{}, value interface{}) bool {
 		playersFound++
+		counter[key] = value
 		return true
 	})
-	logger.Println("info: Found:", playersFound, " players")
+	logger.Println("info: Found:", playersFound, " players", len(counter))
 	logger.Println("info: Took: ", time.Since(start), " to load all playerids and gameids")
 }
 
