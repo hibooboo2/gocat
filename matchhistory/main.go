@@ -38,6 +38,14 @@ func main() {
 			log.Fatalln(err)
 		}
 		log.Println(db.TransferToAnother("", 27027))
+	case "gameidgen":
+		db, err := lol.NewLolMongoWAccess("", 0)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		log.Println("Genning ids..")
+		db.GameIDSToIDTable()
+		log.Println("Done")
 	case "random":
 		rand.Seed(time.Now().Unix())
 		start := time.Now()
