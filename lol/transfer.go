@@ -1,11 +1,10 @@
 package lol
 
 import (
-	"fmt"
 	"log"
-	"os"
+	"time"
 
-	"gopkg.in/mgo.v2/bson"
+	mgo "gopkg.in/mgo.v2"
 )
 
 func (db *lolMongo) TransferToAnother(host string, port int) error {
@@ -96,44 +95,14 @@ func (db *lolMongo) TransferToAnother(host string, port int) error {
 }
 
 func (db *lolMongo) GameIDSToIDTable() {
-	log.Println(db.gamesid.DropCollection())
-	batchSize := 100
-	totalGames, _ := db.games.Find(nil).Count()
-	var count int
-	var err error
-	for err == nil {
-		var games []Game
-		err = db.games.Find(nil).Skip(count).Limit(batchSize).All(&games)
-		if err != nil {
-			logger.Println("err:", err)
-			continue
-		}
-		count += len(games)
-		logger.Println("Got batch", count)
-		b := db.gamesid.Bulk()
-		for _, game := range games {
-			b.Insert(bson.M{"gameid": game.GameID})
-		}
-		res, err := b.Run()
-		if err != nil {
-			logger.Println("err:", err)
-			continue
-		}
-		logger.Println("Inserted batch", count)
-		if res.Matched+res.Modified != len(games) {
-			logger.Printf("May have skipped games. Games: %d Matched+Mod: %d", len(games), res.Matched+res.Modified)
-		}
-		games = nil
-		fmt.Fprintf(os.Stdout, "Transfering ids: %d\r", count)
-	}
-	if err != nil {
-		logger.Println("err: games to gameID table:", err)
-	}
-	totalIDS, _ := db.gamesid.Count()
-	if totalIDS == totalGames {
-		logger.Println("info: all ids copied and len is  equal for both")
-	} else {
-		logger.Printf("err: NOt all is well IDS: %d Games:%d", totalIDS, totalGames)
-	}
-	logger.Println(db.gamesid.Find(nil).Count())
+	log.Println(db.session.DB("lol").C("gamesid").DropCollection())
+	start := time.Now()
+	log.Println("Building index")
+	log.Println(db.games.EnsureIndex(mgo.Index{
+		Key:      []string{"gameid"},
+		DropDups: true,
+		Unique:   true,
+		Name:     "game_IDs_index",
+	}))
+	log.Println("Index Built Took:", time.Since(start))
 }

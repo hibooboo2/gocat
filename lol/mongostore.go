@@ -1,7 +1,6 @@
 package lol
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -14,7 +13,6 @@ type lolMongo struct {
 	session        *mgo.Session
 	db             *mgo.Database
 	games          *mgo.Collection
-	gamesid        *mgo.Collection
 	players        *mgo.Collection
 	playersVisited *mgo.Collection
 	lolCache
@@ -44,7 +42,6 @@ func NewLolMongo(host string, port int) (lolStorer, error) {
 		session:        session,
 		db:             session.DB("lol"),
 		games:          session.DB("lol").C("games"),
-		gamesid:        session.DB("lol").C("gamesid"),
 		players:        session.DB("lol").C("players"),
 		playersVisited: session.DB("lol").C("playersvisited"),
 	}
@@ -63,10 +60,6 @@ func NewLolMongoWAccess(host string, port int) (*lolMongo, error) {
 func (db *lolMongo) GetGame(gameID int64, currentPlatformID string) (Game, error) {
 	var game Game
 	// err := db.db.Read("games", fmt.Sprintf("%d_%s", gameID, currentPlatformID), &game)
-	n, _ := db.gamesid.Find(bson.M{"gameid": gameID}).Count()
-	if n == 0 {
-		return game, errors.New("Game Not Found in DB")
-	}
 	err := db.games.Find(bson.M{"gameid": gameID, "platformid": currentPlatformID}).One(&game)
 	db.lolCache.AddGame(gameID)
 	return game, err
@@ -76,7 +69,7 @@ func (db *lolMongo) CheckGameStored(gameID int64) bool {
 	if db.lolCache.HaveGame(gameID) {
 		return true
 	}
-	n, err := db.gamesid.Find(bson.M{"gameid": gameID}).Count()
+	n, err := db.games.Find(bson.M{"gameid": gameID}).Count()
 	have := err == nil && n > 0
 	if have {
 		db.lolCache.AddGame(gameID)
@@ -88,14 +81,9 @@ func (db *lolMongo) SaveGame(game Game, currentPlatformID string) error {
 	if db.lolCache.HaveGame(game.GameID) {
 		return nil
 	}
-	n, _ := db.gamesid.Find(bson.M{"gameid": game.GameID}).Count()
+	n, _ := db.games.Find(bson.M{"gameid": game.GameID}).Count()
 	if n == 0 {
-		_, err := db.gamesid.Upsert(bson.M{"gameid": game.GameID}, bson.M{"gameid": game.GameID})
-		if err != nil {
-			return err
-		}
-
-		err = db.games.Insert(&game)
+		err := db.games.Insert(&game)
 		if err != nil {
 			return err
 		}
@@ -158,7 +146,6 @@ func (db *lolMongo) Stats() {
 	for {
 		time.Sleep(time.Second)
 		g, _ := db.games.Count()
-		gid, _ := db.gamesid.Count()
 		diff := g - prevCount
 		diffs = append(diffs, diff)
 		rate := avg(diffs)
@@ -168,32 +155,24 @@ func (db *lolMongo) Stats() {
 		prevCount = g
 		p, _ := db.players.Count()
 		pv, _ := db.playersVisited.Count()
-		fmt.Fprintf(os.Stdout, "GameAddRate %0f/s\t Games: %d\t GameIDs: %d\t Players %d\t PlayersVisited %d\r", rate, g, gid, p, pv)
+		fmt.Fprintf(os.Stdout, "GameAddRate %0f/s\t Games: %d\t Players %d\t PlayersVisited %d\r", rate, g, p, pv)
 	}
 }
 
 func (db *lolMongo) LoadAllGameIDS() {
 	start := time.Now()
-	var ids []bson.M
+	var ids []Game
 	var err error
 	var id int64
 	n := 0
 	batchSize := 2000
 	for err == nil {
-		err = db.gamesid.Find(nil).Limit(batchSize).Skip(n * batchSize).All(&ids)
+		err = db.games.Find(nil).Select(bson.M{"gameid": 1}).Limit(batchSize).Skip(n * batchSize).All(&ids)
 		var gameID int64
 		for _, v := range ids {
-			id, ok := v["gameid"]
-			if !ok {
-				logger.Println("info: failed get gameid", v)
-				continue
-			}
-			gameID, ok = id.(int64)
-			if !ok {
-				logger.Println("info: failed cast gameid", v)
-				continue
-			}
-			db.lolCache.AddGame(gameID)
+			logger.Println(v.GameID)
+			db.lolCache.AddGame(v.GameID)
+			gameID = v.GameID
 		}
 		if id == gameID {
 			break
