@@ -120,10 +120,10 @@ func (db *lolMongo) GameIDSToIDTable() {
 		game.GameID = gameID
 		var gameCopy Game
 		n, err := db.games.Find(bson.M{"gameid": game.GameID}).Count()
-		if n == 0 && err == nil {
+		if n == 0 || n == 1 && err == nil {
 			fmt.Fprintf(os.Stdout, "Skipped: N: %d  ID: %d\r", n, game.GameID)
 			continue
-		} else if n > 0 && err == nil {
+		} else if n > 1 && err == nil {
 			fmt.Fprintf(os.Stdout, "Found: N: %d ID: %d\r", n, game.GameID)
 			continue
 		}
