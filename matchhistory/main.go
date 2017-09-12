@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"math/rand"
 	"os"
-	"time"
 
+	"github.com/comail/colog"
 	"github.com/hibooboo2/gocat/lol"
 )
 
@@ -16,7 +14,7 @@ func init() {
 
 func main() {
 	defer lol.DefaultClient().Close()
-	// lol.SetLogLevel(colog.LTrace)
+	lol.SetLogLevel(colog.LTrace)
 	if len(os.Args) != 2 {
 		log.Println("Invalid args:", os.Args)
 		os.Exit(0)
@@ -39,7 +37,7 @@ func main() {
 		}
 		log.Println(db.TransferToAnother("", 27027))
 	case "gameidgen":
-		db, err := lol.NewLolMongoWAccess("", 0)
+		db, err := lol.NewLolMongoWAccess("localhost", 0)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -47,18 +45,11 @@ func main() {
 		db.GameIDSToIDTable()
 		log.Println("Done")
 	case "random":
-		rand.Seed(time.Now().Unix())
-		start := time.Now()
-		games := make([]lol.Game, 5000000)
-		for i := 0; i < len(games); i++ {
-			g := games[i]
-			g.GameID = rand.Int63n(70000000)
-			games[i] = g
+		db, err := lol.NewLolMongoWAccess("dev.jhrb.us", 27217)
+		if err != nil {
+			log.Fatalln(err)
 		}
-		for _, g := range games {
-			fmt.Fprintf(os.Stdout, "ID: %d\r", g.GameID)
-		}
-		fmt.Printf("\nTook: %v Games: %d", time.Since(start), len(games))
+		db.GetGameRan()
 	default:
 		log.Println(os.Args[1])
 	}
