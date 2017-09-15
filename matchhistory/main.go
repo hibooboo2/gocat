@@ -20,10 +20,16 @@ func main() {
 		os.Exit(0)
 	}
 	switch os.Args[1] {
+	case "server":
+		// Start nats
+		// Start vms
+		// Start requsting games Based on players in db. If no players start a seed client.
+		// Scrap for matchhistory with 1 client. Others will do games.
+	case "client":
+		// Get games by id. Or get matchhistory by accountid.
 	case "-w":
 		lol.DefaultClient().GetCache().Stats()
 	case "seed":
-		lol.DefaultClient().GetCache().LoadAllGameIDS()
 		seed(202988570)
 	case "scrap":
 		lol.DefaultClient().GetCache().LoadAllGameIDS()
@@ -37,7 +43,7 @@ func main() {
 		}
 		log.Println(db.TransferToAnother("", 27027))
 	case "gameidgen":
-		db, err := lol.NewLolMongoWAccess("localhost", 0)
+		db, err := lol.NewLolMongoWAccess("192.168.1.170", 27017)
 		if err != nil {
 			log.Fatalln(err)
 		}

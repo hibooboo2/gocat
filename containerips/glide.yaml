@@ -1,0 +1,4 @@
+package: github.com/hibooboo2/gocat/containerips
+import:
+- package: github.com/comail/colog
+- package: gopkg.in/mgo.v2

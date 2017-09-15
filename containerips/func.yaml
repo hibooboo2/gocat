@@ -1,0 +1,4 @@
+name: containerips
+version: 0.0.33
+runtime: go
+entrypoint: ./func

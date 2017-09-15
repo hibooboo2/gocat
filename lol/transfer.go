@@ -1,12 +1,6 @@
 package lol
 
-import (
-	"fmt"
-	"os"
-
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
-)
+import mgo "gopkg.in/mgo.v2"
 
 func (db *lolMongo) TransferToAnother(host string, port int) error {
 	db2, err := NewLolMongoWAccess(host, port)
@@ -109,77 +103,82 @@ func (db *lolMongo) GameIDSToIDTable() {
 	// log.Println("Index Built Took:", time.Since(start))
 	logger.Println(db.session.BuildInfo())
 	// logger.Println(testDB.Pipe([]bson.M{{"$group": {"_id": "$gameid", "dups": {"$push": "$_id"}}}}).All(&stuff))
-	var ids []int64
-	logger.Println(db.games.Find(nil).Distinct("gameid", &ids))
-	logger.Println(len(ids))
+	// var ids []int64
+	// logger.Println(db.games.Find(nil).Distinct("gameid", &ids))
+	// f, _ := os.Create("gameids")
+	// data, _ := json.Marshal(ids)
+	// f.Write(data)
+	// f.Close()
+	// logger.Println(len(ids))
 	// var games []Game
-	// logger.Println(db.games.Find(nil).Select(bson.M{"gameid": 1}).All(&games))
-	// logger.Println(len(games))
-	for _, gameID := range ids {
-		var game Game
-		game.GameID = gameID
-		var gameCopy Game
-		n, err := db.games.Find(bson.M{"gameid": game.GameID}).Count()
-		if n == 0 || n == 1 && err == nil {
-			fmt.Fprintf(os.Stdout, "Skipped: N: %d  ID: %d\r", n, game.GameID)
-			continue
-		} else if n > 1 && err == nil {
-			fmt.Fprintf(os.Stdout, "Found: N: %d ID: %d\r", n, game.GameID)
-			continue
-		}
-		if err != nil {
-			logger.Println("err: error on count", err)
-			continue
-		}
-		fmt.Fprintf(os.Stdout, "Working: %d\r", game.GameID)
-		err = db.games.Find(bson.M{"gameid": game.GameID}).One(&gameCopy)
-		if err != nil {
-			logger.Println("err: Errored on game query", game.GameID, err)
-			continue
-		}
-		fmt.Fprintf(os.Stdout, "Working copy: %d\r", gameCopy.GameID)
-		n, err = db.games.Find(bson.M{"gameid": game.GameID}).Count()
-		if err != nil {
-			logger.Println("err: May have lost game:", gameCopy.GameID, err)
-			continue
-		}
-		fmt.Fprintf(os.Stdout, "n: %d \tWorking copy: %d\r", n, gameCopy.GameID)
-		for n > 1 {
-			err = db.games.Remove(bson.M{"gameid": game.GameID})
-			if err != nil {
-				logger.Println("err: errored on game removal", game.GameID)
-				break
-			}
-			logger.Println("Removed: ", game.GameID)
-			n, err = db.games.Find(bson.M{"gameid": game.GameID}).Count()
-			if err != nil {
-				logger.Println("err: errored on game find", game.GameID)
-				break
-			}
-			fmt.Fprintf(os.Stdout, "n: %d \tWorking copy: %d\r", n, gameCopy.GameID)
-		}
-		n, err = db.games.Find(bson.M{"gameid": game.GameID}).Count()
-		if n == 0 && err == nil {
-			err = db.games.Insert(gameCopy)
-			if err != nil {
-				logger.Println("err: May have lost game:", gameCopy.GameID, err)
-				continue
-			}
-		}
-		if err != nil {
-			logger.Println("err: May have lost game:", gameCopy.GameID, err)
-			continue
-		}
-		fmt.Fprintf(os.Stdout, "Removed Dups for: %d First sum: %s\r", gameCopy.GameID, gameCopy.ParticipantIdentities[0].Player.SummonerName)
-	}
-	gamesCount, _ := db.games.Count()
-	logger.Println("After games de dup loop:", gamesCount, "Games in map:", len(ids))
+	// logger.Println(db.games.Find(nil).All(&games))
+	// gamesMap := make(map[int64]Game)
+	// f, _ := os.Open("allgames.json")
+	// defer f.Close()
+	// err := json.NewDecoder(f).Decode(&gamesMap)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// for _, game := range gamesMap {
+	// 	err = db.db.C("new_games").Insert(game)
+	// 	if err != nil {
+	// 		logger.Println("err:", err)
+	// 	}
+	// 	fmt.Fprintf(os.Stdout, "GameID:\t %d\r", game.GameID)
+	// }
+	// for _, game := range games {
+	// 	gamesMap[game.GameID] = game
+	// }
+	// dupGamesCount := make(map[int64]int)
+	// for _, game := range games {
+	// dupGamesCount[game.GameID]++
+	// }
+	// data, _ = json.Marshal(gamesMap)
+	// f, _ = os.Create("allgames.json")
+	// f.Write(data)
+	// f.Close()
+	// os.Exit(0)
+	// removed := 0
+	// toskip := 0
+	// for id, n := range dupGamesCount {
+	// 	if n <= 1 {
+	// 		logger.Println("Skipped: ", id)
+	// 		toskip++
+	// 		continue
+	// 	} else {
+	// 		continue
+	// 	}
+	// var err error
+	// for n > 1 {
+	// 	err = db.games.Remove(bson.M{"gameid": id})
+	// 	n--
+	// 	if err != nil {
+	// 		logger.Println("err: errored on game removal", id)
+	// 		continue
+	// 	}
+	// 	removed++
+	// 	fmt.Fprintf(os.Stdout, "n: %d \tRemoved: %d\r", n, id)
+	// }
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stdout, "Failed Dups for: %d\r", id)
+	// 	continue
+	// }
+	// fmt.Fprintf(os.Stdout, "Removed: %d Removed Dups for: %d\r", removed, id)
+	// }
+	// logger.Printf("To SKip: %d Total %d Records TO remove: %d", toskip, len(games), len(games)-toskip)
+	// gamesCount, _ := db.games.Count()
+	// newGames, _ := db.db.C("new_games").Count()
+	// logger.Println("After games de dup loop:", gamesCount, "Games in map:", len(gamesMap), "Removed:", gamesCount-newGames)
 	logger.Println(db.games.EnsureIndex(mgo.Index{
 		Key:      []string{"gameid"},
 		DropDups: true,
 		Unique:   true,
 	}))
-
+	logger.Println(db.players.EnsureIndex(mgo.Index{
+		Key:      []string{"accountid"},
+		DropDups: true,
+		Unique:   true,
+	}))
 }
 
 func (db *lolMongo) GetGameRan() {
