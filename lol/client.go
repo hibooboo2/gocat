@@ -33,7 +33,7 @@ type RegionEndPoint string
 
 type client struct {
 	client            *http.Client
-	baseUrl           RegionEndPoint
+	baseURL           RegionEndPoint
 	requests          map[string]string
 	cache             lolStorer
 	requestsMade      *int64
@@ -60,7 +60,7 @@ func NewClient(region RegionEndPoint) (RiotClient, error) {
 		requestsMade:      &x,
 		requestsSucceeded: &y,
 		cache:             cache,
-		baseUrl:           region,
+		baseURL:           region,
 		requests:          make(map[string]string),
 	}, nil
 }
@@ -70,18 +70,19 @@ func (c *client) GetCache() lolStorer {
 }
 
 func (c *client) GetObjRiot(url string, val interface{}) error {
-	url = path.Join(string(c.baseUrl), url)
+	url = path.Join(string(c.baseURL), url)
 	body, err := c.GetBody(url)
 	if err != nil {
 		return err
 	}
 	buff := &bytes.Buffer{}
 	io.Copy(buff, body)
+	cp := buff.String()
 	err = json.NewDecoder(buff).Decode(val)
 	if err != nil {
-		logger.Println("trace: body: ", buff.String())
+		logger.Println("trace: body: ", cp)
 	}
-	logger.Println("trace: body: ", buff.String())
+	logger.Println("trace: body: ", cp)
 
 	return err
 }
@@ -129,7 +130,7 @@ func (c *client) Get(url string) (*http.Response, error) {
 	}
 	switch resp.StatusCode {
 	case http.StatusTooManyRequests:
-		logger.Println("info: Headers on 429 request:", resp.Header)
+		logger.Println("debug: Headers on 429 request:", resp.Header)
 		time.Sleep(time.Second * 2)
 		logger.Println("trace: slow down charlie.\r")
 		c.requestLock.Unlock()

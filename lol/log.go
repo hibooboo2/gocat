@@ -15,7 +15,7 @@ var (
 func init() {
 	logWriter = colog.NewCoLog(os.Stdout, "lolapi:", log.Lshortfile)
 	logWriter.SetDefaultLevel(colog.LTrace)
-	// logWriter.SetMinLevel(colog.LDebug)
+	logWriter.SetMinLevel(colog.LDebug)
 	logger = log.New(logWriter, "", 0)
 	logger.Println("Logger initialized for lolapi.")
 }

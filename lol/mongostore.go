@@ -33,9 +33,9 @@ func NewLolMongo(host string, port int) (lolStorer, error) {
 		return nil, err
 	}
 	n, _ := session.DB("lol").C("games").Count()
-	logger.Printf("debug:games: %d", n)
+	logger.Printf("debug: games: %d", n)
 	n, _ = session.DB("lol").C("players").Count()
-	logger.Printf("debug:left to visit: %d", n)
+	logger.Printf("debug: left to visit: %d", n)
 	n, _ = session.DB("lol").C("playersvisited").Count()
 	logger.Printf("debug: visited: %d", n)
 	mongo := &lolMongo{

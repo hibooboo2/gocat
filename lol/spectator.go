@@ -14,6 +14,9 @@ func (s *spectator) Game(summonerID int64) *CurrentGameInfo {
 	if err != nil {
 		return nil
 	}
+	if g.GameID == 0 {
+		return nil
+	}
 	return &g
 }
 
@@ -24,13 +27,40 @@ func (s *spectator) GameSummonerName(summonerName string) *CurrentGameInfo {
 	return g
 }
 
-func (s *spectator) Featured() []CurrentGameInfo {
-	var games []CurrentGameInfo
-	err := s.c.GetObjRiot("/lol/spectator/v3/featured-games", &games)
+func (s *spectator) Featured() *FeaturedGames {
+	var g FeaturedGames
+	err := s.c.GetObjRiot("/lol/spectator/v3/featured-games", &g)
 	if err != nil {
 		return nil
 	}
-	return games
+	return &g
+}
+
+type FeaturedGames struct {
+	GameList []struct {
+		GameID            int64  `json:"gameId"`
+		MapID             int    `json:"mapId"`
+		GameMode          string `json:"gameMode"`
+		GameType          string `json:"gameType"`
+		GameQueueConfigID int    `json:"gameQueueConfigId"`
+		Participants      []struct {
+			TeamID        int    `json:"teamId"`
+			Spell1ID      int    `json:"spell1Id"`
+			Spell2ID      int    `json:"spell2Id"`
+			ChampionID    int    `json:"championId"`
+			ProfileIconID int    `json:"profileIconId"`
+			SummonerName  string `json:"summonerName"`
+			Bot           bool   `json:"bot"`
+		} `json:"participants"`
+		Observers struct {
+			EncryptionKey string `json:"encryptionKey"`
+		} `json:"observers"`
+		PlatformID      string        `json:"platformId"`
+		BannedChampions []interface{} `json:"bannedChampions"`
+		GameStartTime   int64         `json:"gameStartTime"`
+		GameLength      int           `json:"gameLength"`
+	} `json:"gameList"`
+	ClientRefreshInterval int `json:"clientRefreshInterval"`
 }
 
 type CurrentGameInfo struct {
