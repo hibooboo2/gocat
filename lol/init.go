@@ -3,7 +3,7 @@ package lol
 import "sync"
 
 var (
-	defaultClient *Client
+	defaultClient RiotClient
 	one           sync.Once
 )
 
@@ -12,9 +12,9 @@ const (
 )
 
 // DefaultClient returns the default client
-func DefaultClient() *Client {
+func DefaultClient() RiotClient {
 	one.Do(func() {
-		c, err := NewClient()
+		c, err := NewClient(NA)
 		if err != nil {
 			panic(err)
 		}

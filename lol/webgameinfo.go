@@ -52,7 +52,7 @@ type ParticipantIdentity struct {
 }
 
 // WebMatch circumvent riots api throttling. Or at least attepmt to. This is using the endpoint that the web ui uses. No docs for it.
-func (c *Client) WebMatch(gameID int64, currentPlatformID string, useCache bool) (*Game, error) {
+func (c *client) WebMatch(gameID int64, currentPlatformID string, useCache bool) (*Game, error) {
 	var game Game
 	var err error
 	if useCache {
@@ -92,6 +92,6 @@ func (c *Client) WebMatch(gameID int64, currentPlatformID string, useCache bool)
 	return &game, nil
 }
 
-func (c *Client) HaveMatch(gameID int64) bool {
+func (c *client) HaveMatch(gameID int64) bool {
 	return c.cache.HaveGame(gameID)
 }

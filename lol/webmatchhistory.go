@@ -22,17 +22,6 @@ type GamesInfoWebUi struct {
 	Games              []Game `json:"games"`
 }
 
-type Player struct {
-	PlatformID        string `json:"platformId"`
-	AccountID         int64  `json:"accountId"`
-	SummonerName      string `json:"summonerName"`
-	SummonerID        int64  `json:"summonerId"`
-	CurrentPlatformID string `json:"currentPlatformId"`
-	CurrentAccountID  int64  `json:"currentAccountId"`
-	MatchHistoryURI   string `json:"matchHistoryUri"`
-	ProfileIcon       int    `json:"profileIcon"`
-}
-
 type PlayerMatchStats struct {
 	ParticipantID                   int  `json:"participantId"`
 	Win                             bool `json:"win"`
@@ -179,7 +168,7 @@ type TimeLine struct {
 }
 
 // WebMatchHistory circumvent riots api throttling. Or at least attepmt to. This is using the endpoint that the web ui uses. No docs for it.
-func (c *Client) WebMatchHistory(accountID int64, platformID string, index int) (*GamesInfoWebUiResponse, error) {
+func (c *client) WebMatchHistory(accountID int64, platformID string, index int) (*GamesInfoWebUiResponse, error) {
 	var games GamesInfoWebUiResponse
 	query := make(url.Values)
 	if index != 0 {
