@@ -36,12 +36,27 @@ func (s *summoners) Arg(arg string) (*Summoner, error) {
 	}
 }
 
+// /lol/summoner/v3/summoners/{summonerId}
 func (s *summoners) ID(summonerID int64) *Summoner {
-	return nil
+	var sum Summoner
+	err := s.c.GetObjRiot(fmt.Sprintf("/lol/summoner/v3/summoners/%d", summonerID), &sum)
+	if err != nil {
+		return nil
+	}
+	return &sum
 }
+
+// /lol/summoner/v3/summoners/by-account/{accountId}
 func (s *summoners) ByAccountID(accountID int64) *Summoner {
-	return nil
+	var sum Summoner
+	err := s.c.GetObjRiot(fmt.Sprintf(`/lol/summoner/v3/summoners/by-account/%d`, accountID), &sum)
+	if err != nil {
+		return nil
+	}
+	return &sum
 }
+
+// /lol/summoner/v3/summoners/by-name/{summonerName}
 func (s *summoners) ByName(summonerName string) *Summoner {
 	var sum Summoner
 	err := s.c.GetObjRiot(fmt.Sprintf("/lol/summoner/v3/summoners/by-name/%s", url.PathEscape(summonerName)), &sum)

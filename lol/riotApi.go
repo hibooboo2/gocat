@@ -3,6 +3,7 @@ package lol
 // RiotClient is the interface that defines the interactions with riots api.
 type RiotClient interface {
 	Mastery() *champMastery
+	Spectator() *spectator
 	// /lol/league/v3/challengerleagues/by-queue/{queue}
 	// /lol/league/v3/leagues/by-summoner/{summonerId}
 	// /lol/league/v3/masterleagues/by-queue/{queue}
@@ -18,7 +19,6 @@ type RiotClient interface {
 	// /lol/platform/v3/masteries/by-summoner/{summonerId}
 	// /lol/platform/v3/masteries/by-summoner/{summonerId}
 	// /lol/platform/v3/runes/by-summoner/{summonerId}
-	Spectator() *spectator
 	// /lol/static-data/v3/champions
 	// /lol/static-data/v3/champions/{id}
 	// /lol/static-data/v3/items
