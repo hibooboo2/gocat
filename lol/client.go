@@ -82,8 +82,6 @@ func (c *client) GetObjRiot(url string, val interface{}) error {
 	if err != nil {
 		logger.Println("trace: body: ", cp)
 	}
-	logger.Println("trace: body: ", cp)
-
 	return err
 }
 

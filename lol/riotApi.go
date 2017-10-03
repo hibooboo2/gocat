@@ -4,6 +4,7 @@ package lol
 type RiotClient interface {
 	Mastery() *champMastery
 	Spectator() *spectator
+	StaticData() *staticData
 	// /lol/league/v3/challengerleagues/by-queue/{queue}
 	// /lol/league/v3/leagues/by-summoner/{summonerId}
 	// /lol/league/v3/masterleagues/by-queue/{queue}
@@ -19,22 +20,15 @@ type RiotClient interface {
 	// /lol/platform/v3/masteries/by-summoner/{summonerId}
 	// /lol/platform/v3/masteries/by-summoner/{summonerId}
 	// /lol/platform/v3/runes/by-summoner/{summonerId}
-	// /lol/static-data/v3/champions
-	// /lol/static-data/v3/champions/{id}
-	// /lol/static-data/v3/items
-	// /lol/static-data/v3/items/{id}
-	// /lol/static-data/v3/language-strings
-	// /lol/static-data/v3/languages
-	// /lol/static-data/v3/maps
 	// /lol/static-data/v3/masteries
 	// /lol/static-data/v3/masteries/{id}
 	// /lol/static-data/v3/profile-icons
-	// /lol/static-data/v3/realms
 	// /lol/static-data/v3/runes
 	// /lol/static-data/v3/runes/{id}
 	// /lol/static-data/v3/summoner-spells
 	// /lol/static-data/v3/summoner-spells/{id}
-	// /lol/static-data/v3/versions
+	// /lol/static-data/v3/realms
+
 	// /lol/status/v3/shard-data
 	Summoners() *summoners
 	GetAllGames(accountID int64, platformID string) ([]Game, error)
@@ -50,4 +44,8 @@ func (c *client) Summoners() *summoners {
 
 func (c *client) Spectator() *spectator {
 	return &spectator{c}
+}
+
+func (c *client) StaticData() *staticData {
+	return &staticData{c}
 }
