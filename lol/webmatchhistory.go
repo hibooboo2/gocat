@@ -180,7 +180,7 @@ func (c *client) WebMatchHistory(accountID int64, platformID string, index int) 
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.Get(reqURL.String())
+	resp, err := c.Get(reqURL.String(), false)
 	if err != nil {
 		return nil, err
 	}

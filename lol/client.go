@@ -71,7 +71,7 @@ func (c *client) GetCache() lolStorer {
 
 func (c *client) GetObjRiot(url string, val interface{}) error {
 	url = path.Join(string(c.baseURL), url)
-	body, err := c.GetBody(url)
+	body, err := c.GetBody(url, true)
 	if err != nil {
 		return err
 	}
@@ -85,14 +85,14 @@ func (c *client) GetObjRiot(url string, val interface{}) error {
 	return err
 }
 
-func (c *client) GetBody(url string) (io.Reader, error) {
+func (c *client) GetBody(url string, auth bool) (io.Reader, error) {
 	c.requestLock.RLock()
 	body, ok := c.requests[url]
 	c.requestLock.RUnlock()
 	if ok {
 		return strings.NewReader(body), nil
 	}
-	resp, err := c.Get(url)
+	resp, err := c.Get(url, auth)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (c *client) GetBody(url string) (io.Reader, error) {
 	return buff, nil
 }
 
-func (c *client) Get(url string) (*http.Response, error) {
+func (c *client) Get(url string, auth bool) (*http.Response, error) {
 	c.requestLock.Lock()
 	defer c.requestLock.Unlock()
 	if !strings.HasPrefix(url, "http") {
@@ -116,7 +116,7 @@ func (c *client) Get(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	if os.Getenv("X_Riot_Token") != "" {
+	if auth && os.Getenv("X_Riot_Token") != "" {
 		r.Header.Add("X-Riot-Token", os.Getenv("X_Riot_Token"))
 	}
 	resp, err := c.client.Do(r)
@@ -132,15 +132,19 @@ func (c *client) Get(url string) (*http.Response, error) {
 		time.Sleep(time.Second * 2)
 		logger.Println("trace: slow down charlie.\r")
 		c.requestLock.Unlock()
-		resp, err = c.Get(url)
+		resp, err = c.Get(url, auth)
 		c.requestLock.Lock()
 		return resp, err
 	case http.StatusNotFound:
 		logger.Println("err: not found", url)
 		return nil, fmt.Errorf("err: object not found: %s", url)
+	case http.StatusOK, http.StatusAccepted:
+		atomic.AddInt64(c.requestsSucceeded, 1)
+		return resp, err
+	default:
+		logger.Println("err: Code not expected:", resp.StatusCode)
+		return nil, fmt.Errorf("err: %d %s", resp.StatusCode, url)
 	}
-	atomic.AddInt64(c.requestsSucceeded, 1)
-	return resp, err
 }
 
 func (c *client) Close() {

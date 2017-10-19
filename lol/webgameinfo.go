@@ -74,7 +74,7 @@ func (c *client) WebMatch(gameID int64, currentPlatformID string, useCache bool)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.Get(reqURL.String())
+	resp, err := c.Get(reqURL.String(), false)
 	if err != nil {
 		return nil, err
 	}
