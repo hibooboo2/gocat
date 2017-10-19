@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/hibooboo2/gocat/lol"
+	"github.com/hibooboo2/lol"
 )
 
 func scrap() error {

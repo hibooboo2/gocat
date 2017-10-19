@@ -5,14 +5,14 @@ import (
 	"os"
 
 	"github.com/comail/colog"
-	"github.com/hibooboo2/gocat/lol"
+	"github.com/hibooboo2/lol"
 )
 
 func main() {
 	lol.SetLogLevel(colog.LError)
-	c, err := lol.NewClient()
+	c, err := lol.NewClient(lol.NA)
 	handleErr(err)
-	defer c.Close()
+	defer c.GetCache().Close()
 	p := c.GetCache().GetPlayerToVisit()
 	if p == 0 {
 		log.Fatalln("No player gotten")

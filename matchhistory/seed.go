@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/hibooboo2/gocat/lol"
+	"github.com/hibooboo2/lol"
 )
 
 func seed(accountID int64) {
@@ -23,7 +23,6 @@ func seed(accountID int64) {
 			sums[sum.Player.AccountID] = sum.Player
 		}
 	}
-	c.GetCache().VisitedPlayer(accountID)
 	delete(sums, accountID)
 	for _, sum := range sums {
 		c.GetCache().StorePlayer(sum)
