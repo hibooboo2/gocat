@@ -47,7 +47,8 @@ func main() {
 		t := p.Input()
 		champ, ok := champs[t]
 		if !ok {
-			break
+			fmt.Printf("Champ %s does not exist\n", t)
+			continue
 		}
 		drawChamp(champ)
 
@@ -87,18 +88,22 @@ type Champ struct {
 
 var champsOnce sync.Once
 var champsMasterMap map[string]Champ
+var relms struct {
+	Cdn string
+	V   string
+	N   struct {
+		Champion string
+	}
+}
 
 func getChamps() map[string]Champ {
 	champsOnce.Do(func() {
-		resp, _ := http.Get("https://ddragon.leagueoflegends.com/realms/na.json")
-		var relms struct {
-			Cdn string
-			V   string
-			N   struct {
-				Champion string
-			}
+		resp, err := http.Get("https://ddragon.leagueoflegends.com/realms/na.json")
+		if err != nil {
+			panic(err)
 		}
-		err := json.NewDecoder(resp.Body).Decode(&relms)
+
+		err = json.NewDecoder(resp.Body).Decode(&relms)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -107,14 +112,17 @@ func getChamps() map[string]Champ {
 		var champData struct {
 			Data map[string]Champ
 		}
-		resp, _ = http.Get(relms.Cdn + "/" + relms.V + "/data/en_US/champion.json")
+		resp, err = http.Get(relms.Cdn + "/" + relms.V + "/data/en_US/champion.json")
+		if err != nil {
+			panic(err)
+		}
 		err = json.NewDecoder(resp.Body).Decode(&champData)
 		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println(relms)
-			fmt.Println(champData.Data)
+			panic(err)
 		}
+		fmt.Println(relms)
+		fmt.Println(champData.Data)
+
 		resp.Body.Close()
 		champsMasterMap = champData.Data
 	})

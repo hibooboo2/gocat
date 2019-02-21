@@ -47,7 +47,7 @@ func drawChamp(champ Champ) {
 	}
 	s.Init()
 	defer s.Fini()
-	resp, err := http.Get(fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/6.24.1/img/champion/%s.png", champ.Id))
+	resp, err := http.Get(fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/%s/img/champion/%s.png", relms.V, champ.Id))
 	if err != nil {
 		// log.Println("Errored getting champ:", err)
 		return
@@ -64,7 +64,7 @@ func drawChamp(champ Champ) {
 }
 
 func drawChampHead(champ Champ) {
-	resp, err := http.Get(fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/6.24.1/img/champion/%s.png", champ.Id))
+	resp, err := http.Get(fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/%s/img/champion/%s.png", relms.V, champ.Id))
 	if err != nil {
 		// log.Println("Errored getting champ:", err)
 		return
